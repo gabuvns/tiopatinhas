@@ -1,0 +1,338 @@
+/* One DOM and one set of controls: table on wide screens, labeled rows on a phone.
+   Explicit table roles keep the relationships when CSS changes the layout. */
+@media (max-width: 680px) {
+  :root[data-theme] .app-shell .category-panel .panel-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  :root[data-theme] .app-shell .category-panel .panel-heading .button {
+    min-height: 44px;
+    padding: 8px 12px;
+  }
+  :root[data-theme] .app-shell .category-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  :root[data-theme] .app-shell .category-search {
+    min-width: 0;
+    width: 100%;
+    min-height: 48px;
+  }
+  :root[data-theme] .app-shell .category-search input {
+    min-height: 46px;
+    padding: 10px 0;
+    font-size: 16px;
+  }
+  :root[data-theme] .app-shell .category-filter {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+  }
+  :root[data-theme] .app-shell .category-filter select {
+    min-height: 48px;
+    width: 100%;
+    max-width: 100%;
+    font-size: 16px;
+  }
+  :root[data-theme] .app-shell .asset-category > summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 8px;
+    min-height: 48px;
+    padding: 14px;
+  }
+  :root[data-theme] .app-shell .category-label {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  :root[data-theme] .app-shell .category-label > strong {
+    font-size: 15px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  :root[data-theme] .app-shell .category-label > small {
+    margin-left: auto;
+    font-size: 11px;
+  }
+  :root[data-theme] .app-shell .category-total {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    text-align: left;
+    min-width: 0;
+    padding-left: 25px;
+  }
+  :root[data-theme] .app-shell .category-total > strong {
+    font-size: 17px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  :root[data-theme] .app-shell .category-total > small {
+    font-size: 11px;
+  }
+  :root[data-theme] .app-shell .category-table {
+    overflow: visible;
+    padding: 0;
+  }
+  :root[data-theme] .app-shell .category-table table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    border-collapse: separate;
+  }
+  :root[data-theme] .app-shell .category-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  :root[data-theme] .app-shell .category-table tbody {
+    display: grid;
+    gap: 0;
+  }
+  :root[data-theme] .app-shell .category-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 12px;
+    padding: 18px 14px;
+    border: 0;
+    border-top: 1px solid var(--surface-rule, var(--edge));
+    background: var(--panel);
+  }
+  :root[data-theme] .app-shell .category-table tbody td {
+    display: block;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: 14px;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  :root[data-theme] .app-shell .category-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 5px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--secondary);
+  }
+  :root[data-theme] .app-shell .category-table td.asset-identity {
+    grid-column: 1 / -1;
+    order: 0;
+  }
+  :root[data-theme] .app-shell .category-table td.asset-identity::before {
+    display: none;
+  }
+  :root[data-theme] .app-shell .category-table .asset-cell {
+    align-items: flex-start;
+    min-width: 0;
+  }
+  :root[data-theme] .app-shell .category-table .asset-cell > span:last-child {
+    min-width: 0;
+  }
+  :root[data-theme] .app-shell .category-table .asset-cell strong {
+    font-size: 15px;
+    overflow-wrap: anywhere;
+  }
+  :root[data-theme] .app-shell .category-table .asset-cell small {
+    max-width: none;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+    line-height: 1.5;
+  }
+  :root[data-theme] .app-shell .category-table td.asset-market-value {
+    grid-column: 1 / -1;
+    order: 1;
+  }
+  :root[data-theme] .app-shell .category-table td.asset-market-value > strong {
+    display: block;
+    font-size: 21px;
+    font-variant-numeric: tabular-nums;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  :root[data-theme] .app-shell .category-table td.asset-geography {
+    order: 2;
+  }
+  :root[data-theme] .app-shell .category-table td.asset-quantity {
+    order: 3;
+  }
+  :root[data-theme] .app-shell .category-table td.asset-current-price {
+    order: 4;
+  }
+  :root[data-theme] .app-shell .category-table td.asset-average-price {
+    order: 5;
+  }
+  :root[data-theme] .app-shell .category-table td.asset-target {
+    grid-column: 1 / -1;
+    order: 6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--surface-rule, var(--edge));
+  }
+  :root[data-theme] .app-shell .category-table td.asset-target::before {
+    margin: 0;
+  }
+  :root[data-theme] .app-shell .category-table .cell-secondary {
+    max-width: none;
+    font-size: 11px;
+    line-height: 1.5;
+    margin-top: 4px;
+    overflow-wrap: anywhere;
+  }
+  :root[data-theme] .app-shell .category-table .reserve-badge {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 5px;
+    white-space: normal;
+    margin-top: 5px;
+    font-size: 11px;
+  }
+  :root[data-theme] .app-shell .category-table .target-input {
+    min-height: 48px;
+    width: 112px;
+    max-width: 100%;
+  }
+  :root[data-theme] .app-shell .category-table .target-input input {
+    min-height: 46px;
+    min-width: 0;
+    width: 100%;
+    padding: 8px;
+    font-size: 16px;
+  }
+  :root[data-theme] .app-shell .category-count {
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+  :root[data-theme] .app-shell .illiquid-category-list {
+    padding: 0 14px 14px;
+    gap: 12px;
+  }
+  :root[data-theme] .app-shell .illiquid-category .illiquid-list {
+    padding: 0 12px;
+  }
+  :root[data-theme] .app-shell .illiquid-category .illiquid-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 16px 0;
+  }
+  :root[data-theme] .app-shell .illiquid-category .illiquid-icon {
+    display: none;
+  }
+  :root[data-theme] .app-shell .illiquid-category .illiquid-name {
+    grid-column: 1;
+    overflow-wrap: anywhere;
+  }
+  :root[data-theme] .app-shell .illiquid-category .illiquid-name strong {
+    font-size: 14px;
+  }
+  :root[data-theme] .app-shell .illiquid-category .illiquid-name small {
+    font-size: 11px;
+  }
+  :root[data-theme] .app-shell .illiquid-category .illiquid-row > strong {
+    grid-column: 1;
+    grid-row: 2;
+    font-size: 18px;
+    overflow-wrap: anywhere;
+  }
+  :root[data-theme] .app-shell .illiquid-category .table-action {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    width: 44px;
+    height: 44px;
+    padding: 10px;
+  }
+  :root[data-theme] .app-shell .rebalance-table-wrap {
+    overflow: visible;
+  }
+  :root[data-theme] .app-shell .rebalance-table {
+    display: block;
+    min-width: 0;
+    width: 100%;
+  }
+  :root[data-theme] .app-shell .rebalance-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  :root[data-theme] .app-shell .rebalance-table tbody {
+    display: grid;
+  }
+  :root[data-theme] .app-shell .rebalance-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 12px;
+    padding: 18px 0;
+    border: 0;
+    border-top: 1px solid var(--surface-rule, var(--edge));
+  }
+  :root[data-theme] .app-shell .rebalance-table td {
+    display: block;
+    padding: 0;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    font-size: 14px;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  :root[data-theme] .app-shell .rebalance-table td::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--secondary);
+    font-size: 11px;
+    font-weight: 500;
+    margin-bottom: 5px;
+  }
+  :root[data-theme] .app-shell .rebalance-table td:first-child {
+    grid-column: 1 / -1;
+  }
+  :root[data-theme] .app-shell .rebalance-table td:first-child::before {
+    display: none;
+  }
+  :root[data-theme] .app-shell .rebalance-table .asset-cell {
+    min-width: 0;
+  }
+  :root[data-theme] .app-shell .rebalance-table .asset-cell > span:last-child {
+    min-width: 0;
+  }
+  :root[data-theme] .app-shell .rebalance-table .asset-cell strong {
+    overflow-wrap: anywhere;
+  }
+  :root[data-theme] .app-shell .rebalance-table .asset-cell small {
+    white-space: normal;
+  }
+  :root[data-theme] .app-shell .rebalance-table .target-input {
+    min-height: 48px;
+    width: 112px;
+    max-width: 100%;
+  }
+  :root[data-theme] .app-shell .rebalance-table .target-input input {
+    min-width: 0;
+    min-height: 46px;
+    width: 100%;
+    padding: 8px;
+    font-size: 16px;
+  }
+}

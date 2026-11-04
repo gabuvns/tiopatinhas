@@ -100,6 +100,10 @@
   min-height: 32px;
   outline-offset: 3px;
 }
+.series-picker-search input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
 .app-shell .series-picker-search button {
   display: grid;
   place-items: center;
@@ -289,13 +293,13 @@
   color: var(--secondary);
 }
 .comparison-plot-scroll {
-  overflow-x: auto;
+  overflow: visible;
   margin-top: 12px;
 }
 .comparison-plot {
   display: block;
   width: 100%;
-  min-width: 560px;
+  min-width: 0;
   touch-action: pan-y;
 }
 .comparison-plot text {
@@ -350,7 +354,7 @@
   flex: 1;
   min-width: 60px;
   width: 100%;
-  min-height: 28px;
+  min-height: 44px;
   accent-color: var(--accent);
 }
 .comparison-empty {
@@ -396,10 +400,72 @@
     margin-left: auto;
   }
   .app-shell .series-picker-panel {
-    left: 0;
-    right: auto;
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    top: auto;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    width: auto;
+    max-width: none;
+    max-height: calc(var(--app-viewport-height, 100dvh) - 84px);
+    display: flex;
+    flex-direction: column;
+    z-index: 101;
+    border-radius: 18px 18px 10px 10px;
+  }
+  .series-picker-list {
+    max-height: none;
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  :root[data-keyboard-open="true"] .app-shell .series-picker-panel {
+    top: calc(var(--app-viewport-top, 0px) + 12px);
+    bottom: auto;
+    max-height: calc(var(--app-viewport-height, 100dvh) - 24px);
+  }
+  .app-shell .series-picker-option {
+    min-height: 48px;
+    font-size: 15px;
+  }
+  .app-shell .series-picker-search input {
+    font-size: 16px;
+    min-height: 44px;
+  }
+  .app-shell .series-picker-search button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .app-shell .series-picker-footer button {
+    min-height: 44px;
+    padding: 8px 18px;
+  }
+  .app-shell .comparison-periods button,
+  .app-shell .comparison-modes button {
+    min-height: 44px;
+    font-size: 13px;
+  }
+  .app-shell .comparison-date-range {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .comparison-date-range > span[aria-hidden] {
+    display: none;
+  }
+  .comparison-date-range label {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+  .app-shell .comparison-date-range input {
     width: 100%;
-    max-width: 100%;
+    min-height: 44px;
+    font-size: 16px;
+  }
+  .comparison-date-range .comparison-frequency {
+    grid-column: 1 / -1;
   }
   .comparison-toolbar {
     gap: 10px;
@@ -432,7 +498,51 @@
     flex-direction: column;
     gap: 6px;
   }
-  .comparison-date-range input {
-    width: 125px;
+}
+.series-picker-panel-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--surface-rule, var(--edge));
+}
+.series-picker-panel-heading strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+.app-shell .series-picker-panel-heading button {
+  min-width: 44px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.app-shell .series-picker-panel-heading button:hover {
+  background: var(--subtle);
+}
+.series-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  border: 0;
+  background: #07131a99;
+  cursor: default;
+}
+.comparison-plot {
+  cursor: crosshair;
+}
+.comparison-plot .comparison-axis-title {
+  font-size: 11px;
+}
+@media (max-width: 680px) {
+  .comparison-plot text {
+    font-size: 11px;
+  }
+  .comparison-readout ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

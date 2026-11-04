@@ -30,6 +30,38 @@ export function installAudit() {
       });
       result.textContent = JSON.stringify(
         {
+          viewport: {
+            width: document.documentElement.clientWidth,
+            contentWidth: document.documentElement.scrollWidth,
+          },
+          smallTouchTargets:
+            window.innerWidth <= 680
+              ? Array.from(
+                  document.querySelectorAll<HTMLElement>(
+                    ".app-shell button, .app-shell summary, .app-shell input:not([type=hidden]), .app-shell select, .app-shell a",
+                  ),
+                )
+                  .filter((node) => {
+                    if (node.matches(".month-picker-native")) return false; // Same action has a full-size month-picker button.
+                    if (
+                      !node.getClientRects().length ||
+                      node.closest("[inert]")
+                    )
+                      return false;
+                    const rect = (
+                      node.closest("label") ?? node
+                    ).getBoundingClientRect();
+                    return rect.width < 43 || rect.height < 43;
+                  })
+                  .slice(0, 12)
+                  .map((node) => ({
+                    label:
+                      node.getAttribute("aria-label") ??
+                      node.textContent?.trim().slice(0, 60),
+                    width: Math.round(node.getBoundingClientRect().width),
+                    height: Math.round(node.getBoundingClientRect().height),
+                  }))
+              : [],
           violations: report.violations.map((violation) => ({
             id: violation.id,
             nodes: violation.nodes.map((node) => ({

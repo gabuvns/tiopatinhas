@@ -77,6 +77,8 @@ import Pockets from "../features/pockets/Pockets";
 import { createDefaultPockets } from "../domain/pockets";
 import ThemeControl from "../shared/ThemeControl";
 import HeaderMenu from "../shared/HeaderMenu";
+import useViewportFrame from "../shared/useViewportFrame";
+import useDialogFocus from "../shared/useDialogFocus";
 const CloudBackupPanel = lazy(
   () => import("../features/cloud/CloudBackupPanel"),
 );
@@ -224,6 +226,7 @@ function MonthPicker({
         ref={inputRef}
         className="month-picker-native"
         type="month"
+        tabIndex={-1}
         aria-label="Mês do relatório"
         value={month}
         onChange={(event) => {
@@ -235,6 +238,9 @@ function MonthPicker({
 }
 
 function App() {
+  useViewportFrame();
+  const mainRef = useRef<HTMLElement>(null);
+  const lastView = useRef<View>("overview");
   const [data, setData] = useState<AppData>(emptyData());
   const [storageHealthy, setStorageHealthy] = useState(true);
   const [cloudOpen, setCloudOpen] = useState(false);
@@ -288,6 +294,9 @@ function App() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
+    if (lastView.current !== view)
+      mainRef.current?.focus({ preventScroll: true });
+    lastView.current = view;
   }, [view]);
 
   useEffect(() => {
@@ -888,6 +897,9 @@ function App() {
   return (
     <DisplayCurrencyContext.Provider value={display}>
       <div className="app-shell">
+        <a className="skip-link" href="#main-content">
+          Pular para o conteúdo
+        </a>
         <aside className={`sidebar ${mobileNav ? "sidebar-open" : ""}`}>
           <div className="brand">
             <span className="brand-mark">
@@ -973,8 +985,16 @@ function App() {
             onClick={() => setMobileNav(false)}
           />
         )}
-        <main className="main-area">
+        <main
+          ref={mainRef}
+          id="main-content"
+          tabIndex={-1}
+          className="main-area"
+        >
           <header className="topbar">
+            <span className="mobile-wordmark" aria-label="TioPatinhas">
+              TioPatinhas<span aria-hidden="true">.</span>
+            </span>
             <button
               className="icon-button mobile-menu"
               aria-label="Abrir navegação"
@@ -1012,6 +1032,18 @@ function App() {
                 }
               />
               <HeaderMenu>
+                <div className="mobile-preferences">
+                  <span>Aparência</span>
+                  <ThemeControl
+                    value={data.settings.theme ?? "system"}
+                    onChange={(theme) =>
+                      setData((current) => ({
+                        ...current,
+                        settings: { ...current.settings, theme },
+                      }))
+                    }
+                  />
+                </div>
                 <button
                   className="button button-outline"
                   onClick={() => setCloudOpen(true)}
@@ -1225,6 +1257,36 @@ function App() {
           </footer>
         </main>
 
+        <nav
+          className="mobile-navigation"
+          aria-label="Navegação principal no celular"
+        >
+          {navItems.map(({ id, label, icon: Icon }) => (
+            <button
+              type="button"
+              key={id}
+              aria-label={label}
+              aria-current={view === id ? "page" : undefined}
+              onClick={() => {
+                setView(id);
+                setMobileNav(false);
+              }}
+            >
+              <Icon size={20} aria-hidden="true" />
+              <span>
+                {
+                  {
+                    overview: "Resumo",
+                    activity: "Histórico",
+                    portfolio: "Carteira",
+                    rebalance: "Rebalancear",
+                    forecast: "Projeções",
+                  }[id]
+                }
+              </span>
+            </button>
+          ))}
+        </nav>
         {guideOpen && (
           <ImportGuide
             onClose={() => setGuideOpen(false)}
@@ -2076,7 +2138,7 @@ function RebalancePage({
         </div>
         {portfolio.positions.length ? (
           <div className="rebalance-table-wrap">
-            <table className="rebalance-table">
+            <table className="rebalance-table" role="table">
               <thead>
                 <tr>
                   <th>ATIVO</th>
@@ -2084,7 +2146,6 @@ function RebalancePage({
                   <th>ALVO</th>
                   <th>ATUAL</th>
                   <th>DIFERENÇA</th>
-                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -2097,8 +2158,8 @@ function RebalancePage({
                     targets > 0 ? (position.targetPercent / targets) * 100 : 0;
                   const gap = targetPercent - currentPercent;
                   return (
-                    <tr key={position.assetId}>
-                      <td>
+                    <tr key={position.assetId} role="row">
+                      <td role="cell" data-label="Ativo">
                         <div className="asset-cell">
                           <span className="asset-avatar">
                             {position.ticker.slice(0, 2)}
@@ -2109,8 +2170,10 @@ function RebalancePage({
                           </span>
                         </div>
                       </td>
-                      <td>{formatMoney(position.value)}</td>
-                      <td>
+                      <td role="cell" data-label="Valor atual">
+                        {formatMoney(position.value)}
+                      </td>
+                      <td role="cell" data-label="Alvo">
                         <label className="target-input target-wide">
                           <input
                             aria-label={
@@ -2129,7 +2192,7 @@ function RebalancePage({
                           <span>%</span>
                         </label>
                       </td>
-                      <td>
+                      <td role="cell" data-label="Atual">
                         <div className="current-allocation">
                           <div className="progress-track">
                             <span
@@ -2143,16 +2206,13 @@ function RebalancePage({
                           </small>
                         </div>
                       </td>
-                      <td>
+                      <td role="cell" data-label="Diferença">
                         <span
                           className={`gap-value ${gap > 0.1 ? "gap-positive" : gap < -0.1 ? "gap-negative" : ""}`}
                         >
                           {gap > 0 ? "+" : ""}
                           {gap.toFixed(1).replace(".", ",")} p.p.
                         </span>
-                      </td>
-                      <td>
-                        <ChevronRight size={15} className="muted-icon" />
                       </td>
                     </tr>
                   );
@@ -2275,6 +2335,8 @@ function EntryModal({
   onKindChange: (kind: EntryKind) => void;
 }) {
   const [geography, setGeography] = useState<Geography>("Brasil");
+  const dialogRef = useRef<HTMLElement>(null);
+  useDialogFocus(dialogRef, onClose);
   const titleMap: Record<EntryKind, string> = {
     income: "Registrar recebimento",
     expense: "Registrar despesa",
@@ -2322,6 +2384,7 @@ function EntryModal({
       }}
     >
       <section
+        ref={dialogRef}
         className="modal-card"
         role="dialog"
         aria-modal="true"
@@ -2965,9 +3028,19 @@ function ConfirmDialog({
   onConfirm: () => void;
   busy?: boolean;
 }) {
+  const dialogRef = useRef<HTMLElement>(null);
+  useDialogFocus(dialogRef, () => {
+    if (!busy) onCancel();
+  });
   return (
     <div className="modal-backdrop">
-      <section className="confirm-card" role="dialog" aria-modal="true">
+      <section
+        ref={dialogRef}
+        className="confirm-card"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
         <div className="modal-header">
           <div>
             <span className="modal-eyebrow">BACKUP LOCAL</span>

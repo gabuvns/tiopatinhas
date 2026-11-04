@@ -1,6 +1,11 @@
 import { useId, useMemo, useState } from "react";
 import type { DisplayCurrency } from "../../domain/domain";
 import {
+  chartGeometry,
+  nearestChartIndex,
+  useChartViewport,
+} from "./chartViewport";
+import {
   comparisonMonths,
   indexedMonths,
   type ComparisonSeries,
@@ -16,6 +21,8 @@ export default function ComparisonChart({
   indexed: boolean;
 }) {
   const id = useId();
+  const viewport = useChartViewport();
+  const [touchSelection, setTouchSelection] = useState(false);
   const original = useMemo(() => comparisonMonths(series), [series]);
   const rows = useMemo(
     () =>
@@ -39,6 +46,7 @@ export default function ComparisonChart({
     series.some((item) => item.id === "contributions") &&
     series.some((item) => item.id !== "contributions");
   const rightAxis = (seriesId: string) => mixed && seriesId === "contributions";
+  const geometry = chartGeometry(viewport.width, mixed);
   const format = (value: number) =>
     indexed
       ? new Intl.NumberFormat("pt-BR", {
@@ -56,8 +64,7 @@ export default function ComparisonChart({
           value,
         ) + "%"
       : new Intl.NumberFormat("pt-BR", {
-          style: "currency",
-          currency,
+          ...(geometry.compact ? {} : { style: "currency", currency }),
           notation: "compact",
           maximumFractionDigits: 0,
         }).format(value);
@@ -76,10 +83,17 @@ export default function ComparisonChart({
   const left = bounds(false),
     right = bounds(true);
   const x = (i: number) =>
-    rows.length === 1 ? 480 : 90 + (i / (rows.length - 1)) * 780;
+    rows.length === 1
+      ? (geometry.start + geometry.end) / 2
+      : geometry.start +
+        (i / (rows.length - 1)) * (geometry.end - geometry.start);
   const y = (value: number, rightSide: boolean) => {
     const scale = rightSide ? right : left;
-    return 282 - ((value - scale.min) / (scale.max - scale.min)) * 224;
+    return (
+      geometry.bottom -
+      ((value - scale.min) / (scale.max - scale.min)) *
+        (geometry.bottom - geometry.top)
+    );
   };
   const color = (item: ComparisonSeries) =>
     `var(--comparison-${item.colorIndex % 9})`;
@@ -97,15 +111,10 @@ export default function ComparisonChart({
   );
   const selectAt = (clientX: number, element: SVGSVGElement) => {
     const rect = element.getBoundingClientRect();
-    const cursor = ((clientX - rect.left) / rect.width) * 960;
-    const nearest =
-      rows.length === 1
-        ? 0
-        : Math.round(((cursor - 90) / 780) * (rows.length - 1));
-    setActive(Math.min(rows.length - 1, Math.max(0, nearest)));
+    setActive(nearestChartIndex(clientX, rect, geometry, rows.length));
   };
   return (
-    <div className="comparison-chart">
+    <div className="comparison-chart" ref={viewport.ref}>
       {!rows.length ? (
         <p className="comparison-empty">
           Ainda não há registros neste período. Escolha outro intervalo ou
@@ -118,7 +127,7 @@ export default function ComparisonChart({
               <strong>{selected?.label}</strong>
               <span>
                 {active === null
-                  ? "Passe o mouse ou explore por mês"
+                  ? "Toque no gráfico ou explore por mês"
                   : "Valores do mês selecionado"}
               </span>
             </div>
@@ -182,16 +191,21 @@ export default function ComparisonChart({
             <div className="comparison-plot-scroll">
               <svg
                 className="comparison-plot"
-                viewBox="0 0 960 340"
+                viewBox={`0 0 ${geometry.width} ${geometry.height}`}
                 role="img"
                 aria-labelledby={id + "-title " + id + "-desc"}
-                onPointerLeave={() => setActive(null)}
-                onPointerMove={(event) =>
-                  selectAt(event.clientX, event.currentTarget)
-                }
-                onPointerDown={(event) =>
-                  selectAt(event.clientX, event.currentTarget)
-                }
+                onPointerLeave={(event) => {
+                  if (event.pointerType === "mouse" && !touchSelection)
+                    setActive(null);
+                }}
+                onPointerMove={(event) => {
+                  if (event.pointerType === "mouse" || event.buttons)
+                    selectAt(event.clientX, event.currentTarget);
+                }}
+                onPointerDown={(event) => {
+                  setTouchSelection(event.pointerType !== "mouse");
+                  selectAt(event.clientX, event.currentTarget);
+                }}
               >
                 <title id={id + "-title"}>
                   Patrimônio e aportes:{" "}
@@ -208,9 +222,15 @@ export default function ComparisonChart({
                   Meses ausentes interrompem as linhas. Use o controle Explorar
                   mês para consultar todos os valores pelo teclado.
                 </desc>
-                <text className="comparison-axis-title" x="90" y="26">
+                <text
+                  className="comparison-axis-title"
+                  x={geometry.compact ? 0 : geometry.start}
+                  y="24"
+                >
                   {indexed
-                    ? "Variação desde o início (%)"
+                    ? geometry.compact
+                      ? "Evolução (%)"
+                      : "Variação desde o início (%)"
                     : (series.every((item) => item.id === "contributions")
                         ? "Aportes/mês"
                         : "Patrimônio") +
@@ -220,37 +240,52 @@ export default function ComparisonChart({
                 {mixed && (
                   <text
                     className="comparison-axis-title"
-                    x="870"
-                    y="26"
+                    x={geometry.compact ? geometry.width : geometry.end}
+                    y="24"
                     textAnchor="end"
                   >
-                    Aportes/mês · {currency} (direita)
+                    {geometry.compact ? "Aportes" : "Aportes/mês"} · {currency}
+                    {geometry.compact ? "" : " (direita)"}
                   </text>
                 )}
-                {[0, 1, 2, 3, 4].map((tick) => {
-                  const value = left.min + ((left.max - left.min) * tick) / 4;
-                  return (
-                    <g key={tick}>
-                      <line
-                        className="comparison-grid"
-                        x1="90"
-                        x2="870"
-                        y1={y(value, false)}
-                        y2={y(value, false)}
-                      />
-                      <text x="78" y={y(value, false) + 4} textAnchor="end">
-                        {compact(value)}
-                      </text>
-                      {mixed && (
-                        <text x="882" y={y(value, false) + 4}>
-                          {compact(
-                            right.min + ((right.max - right.min) * tick) / 4,
-                          )}
+                {(geometry.compact ? [0, 2, 4] : [0, 1, 2, 3, 4]).map(
+                  (tick) => {
+                    const value = left.min + ((left.max - left.min) * tick) / 4;
+                    return (
+                      <g key={tick}>
+                        <line
+                          className="comparison-grid"
+                          x1={geometry.start}
+                          x2={geometry.end}
+                          y1={y(value, false)}
+                          y2={y(value, false)}
+                        />
+                        <text
+                          x={geometry.start - 7}
+                          y={y(value, false) + 4}
+                          textAnchor="end"
+                        >
+                          {compact(value)}
                         </text>
-                      )}
-                    </g>
-                  );
-                })}
+                        {mixed && (
+                          <text
+                            x={
+                              geometry.compact
+                                ? geometry.width - 2
+                                : geometry.end + 7
+                            }
+                            y={y(value, false) + 4}
+                            textAnchor={geometry.compact ? "end" : "start"}
+                          >
+                            {compact(
+                              right.min + ((right.max - right.min) * tick) / 4,
+                            )}
+                          </text>
+                        )}
+                      </g>
+                    );
+                  },
+                )}
                 {series.map((item) => {
                   const segments: number[][] = [[]];
                   rows.forEach((row, i) =>
@@ -312,22 +347,26 @@ export default function ComparisonChart({
                     className="comparison-crosshair"
                     x1={x(index)}
                     x2={x(index)}
-                    y1="48"
-                    y2="282"
+                    y1={geometry.top - 6}
+                    y2={geometry.bottom}
                   />
                 )}
                 {[
                   ...new Set([
                     0,
-                    Math.floor((rows.length - 1) / 3),
-                    Math.floor(((rows.length - 1) * 2) / 3),
+                    ...(geometry.compact
+                      ? []
+                      : [
+                          Math.floor((rows.length - 1) / 3),
+                          Math.floor(((rows.length - 1) * 2) / 3),
+                        ]),
                     rows.length - 1,
                   ]),
                 ].map((i) => (
                   <text
                     key={i}
                     x={x(i)}
-                    y="315"
+                    y={geometry.bottom + 27}
                     textAnchor={
                       i === 0
                         ? "start"

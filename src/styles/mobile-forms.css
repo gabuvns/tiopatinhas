@@ -1,0 +1,353 @@
+/* Form surfaces use the visual viewport when available. The shell updates
+   --app-viewport-height/top as the mobile keyboard opens or closes. */
+.allocation-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+.allocation-search {
+  flex: 1 1 180px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 0 10px;
+  color: var(--secondary);
+}
+:root[data-theme] .app-shell .allocation-search input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  padding: 8px 0;
+}
+.allocation-search button,
+.allocation-selected-filter {
+  min-height: 44px;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  border-radius: 7px;
+}
+.allocation-search button {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  border: 0;
+  background: transparent;
+  margin-right: -10px;
+}
+.allocation-selected-filter {
+  padding: 8px 12px;
+  border: 1px solid var(--edge);
+  background: var(--panel);
+}
+.allocation-selected-filter[aria-pressed="true"],
+.allocation-selected-filter:hover,
+.allocation-search button:hover {
+  color: var(--text);
+  background: var(--subtle);
+}
+:root[data-theme] .app-shell .allocation-result-count,
+:root[data-theme] .app-shell .allocation-empty {
+  color: var(--secondary);
+  font-size: 13px;
+  margin-top: 10px;
+}
+:root[data-theme] .app-shell .allocation-asset[hidden] {
+  display: none;
+}
+:root[data-theme] .app-shell .allocation-asset {
+  min-width: 0;
+}
+:root[data-theme] .app-shell .allocation-asset :is(label, small) {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  :root[data-theme]
+    .app-shell
+    :is(
+      .modal-card,
+      .confirm-card,
+      .cloud-dialog,
+      .conversion-dialog,
+      .pocket-editor,
+      .monthly-goal-editor
+    )
+    :is(input:not([type="range"]), select, textarea) {
+    font-size: 16px;
+  }
+  :root[data-theme]
+    .app-shell
+    :is(
+      .modal-card,
+      .confirm-card,
+      .cloud-dialog,
+      .conversion-dialog,
+      .pocket-editor,
+      .monthly-goal-editor
+    )
+    :is(button, input:not([type="radio"]):not([type="checkbox"]), select) {
+    min-height: 44px;
+  }
+  :root[data-theme]
+    .app-shell
+    :is(.modal-header, .panel-heading)
+    > .icon-button,
+  :root[data-theme] .app-shell .monthly-goal-close {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  :root[data-theme] .app-shell .modal-backdrop {
+    z-index: 120;
+    inset: var(--app-viewport-top, 0px) 0 auto;
+    height: var(--app-viewport-height, 100dvh);
+    padding: max(8px, env(safe-area-inset-top))
+      max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom))
+      max(8px, env(safe-area-inset-left));
+    overflow: hidden;
+    overscroll-behavior: contain;
+  }
+  :root[data-theme] .app-shell :is(.modal-card, .confirm-card) {
+    width: min(100%, 610px);
+    max-width: 100%;
+    max-height: calc(
+      var(--app-viewport-height, 100dvh) - 16px - env(safe-area-inset-top) -
+        env(safe-area-inset-bottom)
+    );
+    min-width: 0;
+    padding: 16px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scroll-padding: 90px 0 110px;
+    border-radius: 12px;
+  }
+  :root[data-theme] .app-shell :is(.modal-card, .confirm-card) .modal-header {
+    position: sticky;
+    top: -16px;
+    z-index: 2;
+    background: var(--panel);
+    margin: -16px -16px 16px;
+    padding: 16px;
+    border-bottom: 1px solid var(--surface-rule, var(--edge));
+  }
+  :root[data-theme] .app-shell .modal-header > div {
+    min-width: 0;
+  }
+  :root[data-theme] .app-shell .modal-header h2 {
+    font-size: 22px;
+    overflow-wrap: anywhere;
+  }
+  :root[data-theme] .app-shell .modal-header p {
+    font-size: 14px;
+  }
+  :root[data-theme] .app-shell :is(.modal-card, .confirm-card) .modal-footer {
+    position: sticky;
+    bottom: -16px;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    background: var(--panel);
+    margin: 16px -16px -16px;
+    padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--edge);
+  }
+  :root[data-theme] .app-shell .modal-footer > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  :root[data-theme] .app-shell .modal-footer > div > button {
+    flex: 1 1 auto;
+    white-space: normal;
+  }
+  :root[data-theme] .app-shell .modal-footer > span {
+    font-size: 12px;
+  }
+  :root[data-theme] .app-shell :is(.entry-tabs, .trade-toggle) {
+    max-width: 100%;
+  }
+  :root[data-theme] .app-shell .entry-tabs button {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    padding: 8px;
+  }
+  :root[data-theme] .app-shell .field {
+    min-width: 0;
+  }
+  :root[data-theme] .app-shell .field > :is(input, select, textarea) {
+    min-width: 0;
+    max-width: 100%;
+  }
+  :root[data-theme] .app-shell :is(.pocket-editor, .monthly-goal-editor) {
+    scroll-margin-top: 90px;
+  }
+  :root[data-theme] .app-shell .pocket-editor .form-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  :root[data-theme] .app-shell .pocket-options {
+    grid-template-columns: minmax(0, 1fr);
+    max-height: min(58dvh, 460px);
+    padding: 6px 4px;
+    gap: 8px;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
+  }
+  :root[data-theme] .app-shell .allocation-asset {
+    padding: 14px 10px;
+    border: 1px solid var(--surface-rule, var(--edge));
+    border-radius: 8px;
+    background: var(--panel);
+    margin: 0;
+  }
+  :root[data-theme] .app-shell .allocation-asset input[type="range"] {
+    appearance: none;
+    display: block;
+    min-height: 44px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    touch-action: pan-y;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  :root[data-theme]
+    .app-shell
+    .allocation-asset
+    input[type="range"]::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--edge);
+  }
+  :root[data-theme]
+    .app-shell
+    .allocation-asset
+    input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    margin-top: -9px;
+    border: 2px solid var(--panel);
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  :root[data-theme]
+    .app-shell
+    .allocation-asset
+    input[type="range"]::-moz-range-track {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--edge);
+  }
+  :root[data-theme]
+    .app-shell
+    .allocation-asset
+    input[type="range"]::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--panel);
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  :root[data-theme] .app-shell .allocation-asset small {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  :root[data-theme] .app-shell .allocation-summary {
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  :root[data-theme] .app-shell .pocket-editor > .goal-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  :root[data-theme] .app-shell .pocket-editor > .goal-actions button {
+    width: 100%;
+  }
+  :root[data-theme] .app-shell .pockets-panel .goal-item > button {
+    min-height: 44px;
+  }
+  :root[data-theme] .app-shell .monthly-goal-heading {
+    gap: 8px;
+  }
+  :root[data-theme] .app-shell .monthly-goal-edit {
+    min-height: 44px;
+    padding: 8px;
+    margin-top: -4px;
+  }
+  :root[data-theme] .app-shell .monthly-goal-editor {
+    padding: 14px;
+  }
+  :root[data-theme] .app-shell .monthly-goal-input input {
+    min-height: 48px;
+    width: min(160px, 100%);
+  }
+  :root[data-theme] .app-shell .monthly-goal-editor fieldset label {
+    min-height: 44px;
+    padding: 10px 0;
+    font-size: 14px;
+    align-items: center;
+  }
+  :root[data-theme] .app-shell .monthly-goal-editor input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+  }
+  :root[data-theme] .app-shell .monthly-goal-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  :root[data-theme] .app-shell .monthly-goal-actions button {
+    min-height: 44px;
+  }
+  :root[data-theme] .app-shell .monthly-goal-reset {
+    min-height: 44px;
+  }
+  :root[data-theme] .app-shell .monthly-goal-help,
+  :root[data-theme] .app-shell .monthly-goal-footnote {
+    font-size: 12px;
+  }
+  :root[data-theme] .app-shell .cloud-dialog {
+    position: fixed;
+    inset: calc(var(--app-viewport-top, 0px) + 8px) 8px auto;
+    width: min(calc(100% - 16px), 760px);
+    max-height: calc(var(--app-viewport-height, 100dvh) - 16px);
+    margin: 0 auto;
+    padding: 20px 16px max(20px, env(safe-area-inset-bottom));
+    overscroll-behavior: contain;
+  }
+  :root[data-theme] .app-shell .cloud-dialog .panel-heading {
+    gap: 12px;
+    align-items: flex-start;
+  }
+  :root[data-theme] .app-shell .cloud-dialog .panel-heading h2 {
+    font-size: 22px;
+    overflow-wrap: anywhere;
+  }
+  :root[data-theme] .app-shell .cloud-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  :root[data-theme] .app-shell .cloud-dialog .button {
+    white-space: normal;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .allocation-search button,
+  .allocation-selected-filter {
+    transition: none;
+  }
+}

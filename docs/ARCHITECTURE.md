@@ -66,4 +66,6 @@ O roteiro detalhado de XLSX fica em docs/CONVERSION_PROMPT.md. Dados e conta →
 
 ## Deploy e validação
 
+O contrato de experiência mobile e as referências de design estão em docs/DESIGN.md. mobile.css organiza a navegação inferior e o cabeçalho compacto até 680px; mobile-forms.css adapta campos e diálogos. useViewportFrame atualiza somente variáveis CSS para viewport/teclado, sem recalcular patrimônio. useDialogFocus contém o foco e isola o fundo nos diálogos de lançamentos e restauração. chartViewport mede o contêiner com ResizeObserver para gráficos sem canvas horizontal fixo. A carteira mantém um único conjunto de campos ao virar cartões; busca em cofrinhos mantém campos filtrados no formulário para não perder destinações. Não alterar esquemas financeiros para guardar dimensões de tela.
+
 Workflow executa bootstrap, instalação, testes, build e publicação apenas de dist; nunca publicar a raiz do repositório. Cada push em main inicia deploy; demais branches executam verificações. Antes de alterar contratos: testar validação de JSON, exportação com USD congelado, recuperação de persistência, cofrinhos, demo, rebalanceamento por aportes e períodos dos gráficos. O texto desta arquitetura também é incluído em documentation.architecture no JSON exportado.

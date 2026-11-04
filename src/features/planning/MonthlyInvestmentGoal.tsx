@@ -51,6 +51,7 @@ export default function MonthlyInvestmentGoal({
     setError("");
   }, [month]);
   const button = useRef<HTMLButtonElement>(null);
+  const percentInput = useRef<HTMLInputElement>(null);
   const monthLabel = new Date(month + "-01T12:00:00").toLocaleDateString(
     "pt-BR",
     { month: "long", year: "numeric" },
@@ -73,6 +74,7 @@ export default function MonthlyInvestmentGoal({
     const percent = value.trim() ? Number(value.replace(",", ".")) : NaN;
     if (!isGoalPercent(percent)) {
       setError("Informe um percentual de 0 a 100.");
+      percentInput.current?.focus();
       return;
     }
     const next = { ...monthlyGoals };
@@ -175,6 +177,7 @@ export default function MonthlyInvestmentGoal({
             <span>Percentual das entradas do mês</span>
             <div>
               <input
+                ref={percentInput}
                 aria-label="Percentual da meta de investimento"
                 inputMode="decimal"
                 value={value}

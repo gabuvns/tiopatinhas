@@ -1,6 +1,6 @@
 .conversion-dialog {
   width: min(760px, calc(100vw - 32px));
-  max-height: min(90dvh, 900px);
+  max-height: min(calc(var(--app-viewport-height, 100dvh) - 16px), 900px);
   padding: 0;
   margin: auto;
   overflow: auto;
@@ -211,10 +211,18 @@
   border-top: 1px solid var(--edge);
   background: var(--panel);
 }
-@media (max-width: 480px) {
+@media (max-width: 760px) {
   .conversion-dialog {
+    position: fixed;
+    inset: calc(var(--app-viewport-top, 0px) + 8px) 8px auto;
     width: calc(100vw - 20px);
-    max-height: 94dvh;
+    max-height: calc(var(--app-viewport-height, 100dvh) - 16px);
+    margin: 0 auto;
+    overflow: hidden;
+  }
+  .conversion-dialog[open] {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
   }
   .conversion-dialog .conversion-heading {
     padding: 22px 18px 18px;
@@ -222,9 +230,21 @@
   }
   .conversion-dialog .conversion-body {
     padding: 20px 18px;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
   .conversion-dialog .conversion-footer {
-    padding: 14px 18px;
+    padding: 12px 18px max(12px, env(safe-area-inset-bottom));
+    gap: 8px;
+  }
+  .conversion-dialog .conversion-footer button {
+    flex: 1 1 auto;
+  }
+  .conversion-dialog .conversion-prompt textarea {
+    font-size: 16px;
+    min-height: 180px;
+    max-height: 45dvh;
   }
   .conversion-dialog .conversion-prompt-actions {
     flex-direction: column;

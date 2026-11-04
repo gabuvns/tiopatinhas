@@ -16,6 +16,7 @@ import {
 } from "../../domain/domain";
 import { useDisplayCurrency } from "../../shared/DisplayCurrency";
 import { groupAssets } from "../../domain/portfolioGroups";
+import "./mobile-assets.css";
 
 export function LiquidAssetGroups({
   positions,
@@ -66,6 +67,7 @@ export function LiquidAssetGroups({
           <label className="category-search">
             <Search size={17} />
             <input
+              type="search"
               aria-label="Buscar ativo na carteira"
               placeholder="Buscar ticker ou nome"
               value={query}
@@ -107,19 +109,33 @@ export function LiquidAssetGroups({
               </span>
             </summary>
             <div className="table-wrap category-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>ATIVO</th>
-                    <th>GEOGRAFIA</th>
-                    <th>QUANTIDADE</th>
-                    <th>PREÇO ATUAL</th>
-                    <th>PREÇO MÉDIO</th>
-                    <th>VALOR EM {currency}</th>
-                    <th>ALVO</th>
+              <table role="table" aria-label={"Ativos de " + group.category}>
+                <thead role="rowgroup">
+                  <tr role="row">
+                    <th role="columnheader" scope="col">
+                      ATIVO
+                    </th>
+                    <th role="columnheader" scope="col">
+                      GEOGRAFIA
+                    </th>
+                    <th role="columnheader" scope="col">
+                      QUANTIDADE
+                    </th>
+                    <th role="columnheader" scope="col">
+                      PREÇO ATUAL
+                    </th>
+                    <th role="columnheader" scope="col">
+                      PREÇO MÉDIO
+                    </th>
+                    <th role="columnheader" scope="col">
+                      VALOR EM {currency}
+                    </th>
+                    <th role="columnheader" scope="col">
+                      ALVO
+                    </th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody role="rowgroup">
                   {[...group.assets]
                     .sort((a, b) =>
                       a.ticker.localeCompare(b.ticker, "pt-BR", {
@@ -127,8 +143,12 @@ export function LiquidAssetGroups({
                       }),
                     )
                     .map((position) => (
-                      <tr key={position.assetId}>
-                        <td>
+                      <tr role="row" key={position.assetId}>
+                        <td
+                          role="cell"
+                          className="asset-identity"
+                          data-label="Ativo"
+                        >
                           <div className="asset-cell">
                             <span
                               className={
@@ -148,7 +168,11 @@ export function LiquidAssetGroups({
                             </span>
                           </div>
                         </td>
-                        <td>
+                        <td
+                          role="cell"
+                          className="asset-geography"
+                          data-label="Geografia"
+                        >
                           <span
                             className={
                               "geo-pill " + position.geography.toLowerCase()
@@ -157,12 +181,20 @@ export function LiquidAssetGroups({
                             {position.geography}
                           </span>
                         </td>
-                        <td>
+                        <td
+                          role="cell"
+                          className="asset-quantity"
+                          data-label="Quantidade"
+                        >
                           {position.balanceBased
                             ? "Saldo consolidado"
                             : formatNumber(position.quantity, 8)}
                         </td>
-                        <td>
+                        <td
+                          role="cell"
+                          className="asset-current-price"
+                          data-label="Preço atual"
+                        >
                           {position.price > 0
                             ? formatMoney(position.price, position.currency)
                             : "—"}
@@ -176,7 +208,11 @@ export function LiquidAssetGroups({
                             Moeda original: {position.currency}
                           </small>
                         </td>
-                        <td>
+                        <td
+                          role="cell"
+                          className="asset-average-price"
+                          data-label="Preço médio"
+                        >
                           {position.averageCost === null
                             ? "Não informado"
                             : formatMoney(
@@ -189,7 +225,11 @@ export function LiquidAssetGroups({
                             </small>
                           )}
                         </td>
-                        <td>
+                        <td
+                          role="cell"
+                          className="asset-market-value"
+                          data-label={"Valor em " + currency}
+                        >
                           <strong>{formatMoney(position.value)}</strong>
                           {position.isEmergencyReserve && (
                             <small className="reserve-badge">
@@ -197,7 +237,11 @@ export function LiquidAssetGroups({
                             </small>
                           )}
                         </td>
-                        <td>
+                        <td
+                          role="cell"
+                          className="asset-target"
+                          data-label="Alvo de alocação"
+                        >
                           {position.isEmergencyReserve ? (
                             <small className="cell-secondary">
                               Reserva · sem ordens
@@ -211,6 +255,7 @@ export function LiquidAssetGroups({
                                   " em porcentagem"
                                 }
                                 type="number"
+                                inputMode="decimal"
                                 min="0"
                                 max="100"
                                 step="0.1"
@@ -313,6 +358,7 @@ export function IlliquidAssetGroups({
                 <strong>{formatMoney(asset.value)}</strong>
                 <button
                   className="table-action"
+                  aria-label={"Atualizar avaliação de " + asset.name}
                   title={"Atualizar avaliação de " + asset.name}
                   onClick={onRevalue}
                 >

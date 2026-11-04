@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import {
   createDefaultPockets,
   pocketBalances,
@@ -22,6 +22,18 @@ export default function Pockets({
   const [editing, setEditing] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [draft, setDraft] = useState<Pocket | null>(null);
+  const opener = useRef<HTMLButtonElement | null>(null);
+  const errorMessage = useRef<HTMLParagraphElement>(null);
+  const headingId = useId();
+  useEffect(() => {
+    if (error) errorMessage.current?.focus();
+  }, [error]);
+  function closeEditor() {
+    setEditing(null);
+    setDraft(null);
+    setError("");
+    opener.current?.focus();
+  }
   const current = draft ?? pockets.find((p) => p.id === editing);
   const balances = pocketBalances(pockets, positions);
   function save(e: FormEvent<HTMLFormElement>) {
@@ -56,9 +68,7 @@ export default function Pockets({
         ? pockets.map((p) => (p.id === next.id ? next : p))
         : [...pockets, next],
     );
-    setEditing(null);
-    setDraft(null);
-    setError("");
+    closeEditor();
   }
   return (
     <section className="panel pockets-panel">
@@ -72,7 +82,8 @@ export default function Pockets({
         </div>
         <button
           className="button button-primary"
-          onClick={() => {
+          onClick={(event) => {
+            opener.current = event.currentTarget;
             const p = {
               id: crypto.randomUUID(),
               name: "Novo cofrinho",
@@ -120,7 +131,8 @@ export default function Pockets({
               </div>
               <button
                 className="button button-outline"
-                onClick={() => {
+                onClick={(event) => {
+                  opener.current = event.currentTarget;
                   setEditing(p.id);
                   setDraft(null);
                   setError("");
@@ -146,24 +158,37 @@ export default function Pockets({
         é gerenciada separadamente.
       </p>
       {current && (
-        <form key={current.id} className="pocket-editor" onSubmit={save}>
-          <h3>{draft ? "Novo cofrinho" : "Gerenciar cofrinho"}</h3>
+        <form
+          key={current.id}
+          className="pocket-editor"
+          onSubmit={save}
+          aria-labelledby={headingId}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              closeEditor();
+            }
+          }}
+        >
+          <h3 id={headingId}>
+            {draft ? "Novo cofrinho" : "Gerenciar cofrinho"}
+          </h3>
           <PocketAllocationEditor
             current={current}
             pockets={pockets}
             positions={positions}
           />
-          {error && <p role="alert">{error}</p>}
+          {error && (
+            <p ref={errorMessage} role="alert" tabIndex={-1}>
+              {error}
+            </p>
+          )}
           <div className="goal-actions">
             <button className="button button-primary">Salvar cofrinho</button>
             <button
               type="button"
               className="button button-outline"
-              onClick={() => {
-                setEditing(null);
-                setDraft(null);
-                setError("");
-              }}
+              onClick={closeEditor}
             >
               Cancelar
             </button>

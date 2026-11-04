@@ -10,7 +10,7 @@ process.on("uncaughtException", (error) => {
   process.exitCode = 1;
 });
 const compiled = await build({
-  loader: { ".md": "text" },
+  loader: { ".md": "text", ".css": "empty" },
   stdin: {
     contents: [
       "export * from './src/domain/money';",

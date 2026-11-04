@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useDisplayCurrency } from "../DisplayCurrency";
+import "./allocation-mobile.css";
 
 const palette = [
   "#76dfab",
@@ -29,7 +30,13 @@ export default function AllocationPie({
   label: string;
 }) {
   const { formatMoney } = useDisplayCurrency();
-  const [selected, setSelected] = useState<string | null>(null);
+  const [pinned, setPinned] = useState<string | null>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const selected = hovered ?? pinned;
+  const toggle = (itemLabel: string) => {
+    setHovered(null);
+    setPinned((current) => (current === itemLabel ? null : itemLabel));
+  };
   const positive = items.filter((item) => item.amount > 0);
   const total = positive.reduce((sum, item) => sum + item.amount, 0);
   const selectedItem = positive.find((item) => item.label === selected);
@@ -72,7 +79,7 @@ export default function AllocationPie({
           className="allocation-pie"
           role="img"
           aria-label={label}
-          onMouseLeave={() => setSelected(null)}
+          onPointerLeave={() => setHovered(null)}
         >
           <title>{label}</title>
           {slices.map((item) => (
@@ -83,7 +90,10 @@ export default function AllocationPie({
                 (selected && selected !== item.label ? " pie-dimmed" : "")
               }
               fill={item.color}
-              onMouseEnter={() => setSelected(item.label)}
+              onPointerEnter={(event) => {
+                if (event.pointerType === "mouse") setHovered(item.label);
+              }}
+              onClick={() => toggle(item.label)}
             >
               {slices.length === 1 ? (
                 <circle cx="120" cy="120" r="104" />
@@ -106,24 +116,26 @@ export default function AllocationPie({
           <small>
             {selectedItem
               ? percent(selectedItem.amount / total) + " do total"
-              : "Passe o mouse nas fatias para explorar"}
+              : "Toque em uma categoria para explorar"}
           </small>
         </div>
       </div>
       <div className="pie-legend" aria-label="Detalhes da distribuição">
         {slices.map((item) => (
           <button
+            type="button"
             key={item.label}
             className={
               "pie-legend-row" + (selected === item.label ? " pie-active" : "")
             }
-            onMouseEnter={() => setSelected(item.label)}
-            onMouseLeave={() => setSelected(null)}
-            onFocus={() => setSelected(item.label)}
-            onBlur={() => setSelected(null)}
-            onClick={() =>
-              setSelected(selected === item.label ? null : item.label)
-            }
+            onPointerEnter={(event) => {
+              if (event.pointerType === "mouse") setHovered(item.label);
+            }}
+            onPointerLeave={() => setHovered(null)}
+            onFocus={() => setHovered(item.label)}
+            onBlur={() => setHovered(null)}
+            onClick={() => toggle(item.label)}
+            aria-pressed={pinned === item.label}
             aria-label={
               item.label +
               ", " +
