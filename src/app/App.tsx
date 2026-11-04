@@ -87,6 +87,7 @@ import AllocationPie from "../shared/charts/AllocationPie";
 import EmergencyReserve from "../features/portfolio/EmergencyReserve";
 import ForecastPage from "../features/planning/ForecastPage";
 import { savingsBaseline } from "../domain/planning";
+import MonthlyInvestmentGoal from "../features/planning/MonthlyInvestmentGoal";
 import {
   CurrencySwitch,
   DisplayCurrencyContext,
@@ -237,6 +238,7 @@ function App() {
   const [data, setData] = useState<AppData>(emptyData());
   const [storageHealthy, setStorageHealthy] = useState(true);
   const [cloudOpen, setCloudOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const [demo, setDemo] = useState(false);
   const [ready, setReady] = useState(false);
   const [view, setView] = useState<View>("overview");
@@ -904,7 +906,7 @@ function App() {
               <X size={18} />
             </button>
           </div>
-          <div className="workspace-label">ESPAÇO PESSOAL</div>
+          <div className="workspace-label">Finanças pessoais</div>
           <div className="profile-chip">
             <div className="profile-avatar">TP</div>
             <div>
@@ -913,11 +915,12 @@ function App() {
             </div>
           </div>
           <nav className="primary-nav">
-            <span className="nav-caption">MENU PRINCIPAL</span>
+            <span className="nav-caption">Acompanhar</span>
             {navItems.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
                 className={`nav-item ${view === id ? "active" : ""}`}
+                aria-current={view === id ? "page" : undefined}
                 onClick={() => {
                   setView(id);
                   setMobileNav(false);
@@ -1044,6 +1047,12 @@ function App() {
                   {demo ? "Sair da demo" : "Experimentar demo"}
                 </button>
                 <button
+                  className="button button-quiet"
+                  onClick={() => setGuideOpen(true)}
+                >
+                  <FileUp size={16} /> Converter planilha
+                </button>
+                <button
                   className="button button-quiet top-import"
                   onClick={() => importRef.current?.click()}
                 >
@@ -1060,6 +1069,8 @@ function App() {
               </HeaderMenu>
               <button
                 className="button button-primary"
+                aria-label="Novo lançamento"
+                title="Novo lançamento"
                 onClick={() => setModal("income")}
               >
                 <Plus size={17} /> Novo lançamento
@@ -1097,6 +1108,26 @@ function App() {
                 portfolio={portfolio}
                 fxRate={fxRate}
                 avgSavings={avgSavings}
+                monthlyGoalPanel={
+                  <MonthlyInvestmentGoal
+                    month={month}
+                    income={summary.income}
+                    invested={summary.invested}
+                    savings={summary.income - summary.expenses}
+                    defaultPercent={data.settings.savingsGoalPercent}
+                    monthlyGoals={data.settings.monthlySavingsGoals}
+                    onChange={({ defaultPercent, monthlyGoals }) =>
+                      setData((current) => ({
+                        ...current,
+                        settings: {
+                          ...current.settings,
+                          savingsGoalPercent: defaultPercent,
+                          monthlySavingsGoals: monthlyGoals,
+                        },
+                      }))
+                    }
+                  />
+                }
                 events={events}
                 onNavigate={setView}
                 onNew={setModal}
@@ -1163,7 +1194,6 @@ function App() {
               />
             )}
           </div>
-          <ImportGuide />
           <footer className="page-footer">
             <span>
               TIOPATINHAS <span className="footer-separator">·</span> CONTROLE
@@ -1195,6 +1225,12 @@ function App() {
           </footer>
         </main>
 
+        {guideOpen && (
+          <ImportGuide
+            onClose={() => setGuideOpen(false)}
+            onImport={() => importRef.current?.click()}
+          />
+        )}
         {cloudOpen && (
           <Suspense
             fallback={
@@ -2985,6 +3021,7 @@ interface OverviewProps {
   portfolio: ReturnType<typeof buildPortfolio>;
   fxRate: number;
   avgSavings: number;
+  monthlyGoalPanel: ReactNode;
   events: LedgerEvent[];
   onNavigate: (view: View) => void;
   onNew: (kind: EntryKind) => void;
@@ -3000,6 +3037,7 @@ function Overview({
   portfolio,
   fxRate,
   avgSavings,
+  monthlyGoalPanel,
   events,
   onNavigate,
   onNew,
@@ -3038,13 +3076,9 @@ function Overview({
     <div className="page-stack">
       <div className="page-heading-row">
         <div>
-          <div className="eyebrow">
-            <span className="eyebrow-dot" /> {todayLabel.toUpperCase()}
-          </div>
-          <h1>
-            Sua visão financeira<span className="heading-period">.</span>
-          </h1>
-          <p>Acompanhe sua evolução financeira com clareza.</p>
+          <div className="eyebrow">{todayLabel}</div>
+          <h1>Visão geral</h1>
+          <p>Seu patrimônio e o movimento do mês.</p>
         </div>
         <div className="heading-actions">
           <button
@@ -3059,17 +3093,8 @@ function Overview({
       </div>
 
       <section className="hero-card">
-        <div className="hero-orbit orbit-one" />
-        <div className="hero-orbit orbit-two" />
-        <div className="hero-orbit orbit-three" />
         <div className="hero-content">
-          <div className="hero-label">
-            <span className="hero-label-icon">
-              <Wallet size={14} />
-            </span>{" "}
-            PATRIMÔNIO TOTAL{" "}
-            <span className="hero-period">ATUALIZADO AGORA</span>
-          </div>
+          <div className="hero-label">Patrimônio consolidado</div>
           <div className="hero-value">{formatMoney(portfolio.totalValue)}</div>
           <div className="hero-foot">
             <div className="hero-split">
@@ -3092,10 +3117,7 @@ function Overview({
           </div>
         </div>
         <div className="hero-side">
-          <div className="hero-side-mark">
-            <TrendingUp size={19} />
-          </div>
-          <span>VISÃO CONSOLIDADA</span>
+          <span>Na carteira</span>
           <strong>
             {portfolio.positions.length + portfolio.illiquidAssets.length}
           </strong>
@@ -3178,42 +3200,13 @@ function Overview({
             </button>
           </div>
         </section>
-        <section className="panel savings-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Ritmo de poupança</h2>
-              <p>Últimos 12 meses com registros, ou o histórico disponível</p>
-            </div>
-            <span className="small-icon soft-green">
-              <Sparkles size={16} />
-            </span>
-          </div>
-          <div className="savings-stat">
-            <strong>
-              {(avgSavings * 100).toFixed(1).replace(".", ",")}
-              <small>%</small>
-            </strong>
-            <span className="savings-caption">
-              da renda se transforma em patrimônio
-            </span>
-          </div>
-          <div className="savings-progress-label">
-            <span>Meta de referência</span>
-            <strong>20%</strong>
-          </div>
-          <div className="progress-track">
-            <span
-              style={{
-                width: `${Math.min(100, Math.max(0, (avgSavings / 0.2) * 100))}%`,
-              }}
-            />
-          </div>
-          <div className="savings-note">
-            <span className="note-sparkle">✳</span> Seu ritmo médio usa{" "}
-            {(avgSavings * 100).toFixed(1).replace(".", ",")}% da renda
-            registrada. <strong>Um passo de cada vez.</strong>
-          </div>
-        </section>
+        <div className="monthly-plan-column">
+          {monthlyGoalPanel}
+          <p className="monthly-savings-context">
+            Poupança média: {(avgSavings * 100).toFixed(1).replace(".", ",")}%
+            da renda. Últimos 12 meses com registros, ou o histórico disponível.
+          </p>
+        </div>
       </div>
 
       <div className="lower-grid">
@@ -3221,7 +3214,7 @@ function Overview({
           <div className="panel-heading">
             <div>
               <h2>Atividade recente</h2>
-              <p>Os últimos registros da sua jornada</p>
+              <p>Últimos eventos registrados</p>
             </div>
             <button
               className="panel-more"
@@ -3250,9 +3243,8 @@ function Overview({
           <div className="panel-heading">
             <div>
               <h2>Acesso rápido</h2>
-              <p>O que você quer registrar?</p>
+              <p>Registre o movimento do seu dinheiro.</p>
             </div>
-            <span className="quick-squiggle">↗</span>
           </div>
           <div className="quick-actions">
             <QuickAction

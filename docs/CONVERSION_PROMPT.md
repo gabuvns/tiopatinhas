@@ -76,6 +76,7 @@ Não crie eventos milestone ou correction para completar informações ausentes.
 - Geografia considera a exposição declarada do ativo; não deduza apenas da bolsa onde negocia.
 - Não invente despesas/receitas para meses vazios nem interpole patrimônio. Não converta linhas de médias/projeções em observações.
 - Cofrinhos são configurações em settings.pockets: id, name, target >= 0 em BRL e allocations com assetId/amount >= 0. Não duplicam patrimônio. A soma destinada não deve exceder a meta nem o saldo disponível entre cofrinhos; ativos da reserva ficam separados.
+- Metas de investimento são configurações opcionais: settings.savingsGoalPercent é o percentual padrão (0..100) das entradas; settings.monthlySavingsGoals é um objeto {"2026-01":30,"2026-02":25} com percentuais por mês. Use meses reais no formato YYYY-MM. Inclua somente metas explícitas da planilha ou informadas pelo usuário; não transforme aportes realizados em metas e não invente percentuais. Quando ausentes, omita esses campos: o app oferece uma referência inicial editável de 20%. Ajustar metas não gera eventos de aportes, compras ou despesas.
 
 ## 5. Validação e entrega
 

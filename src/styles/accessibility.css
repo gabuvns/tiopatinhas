@@ -277,15 +277,6 @@ body {
   background: #36504c;
   color: #fff4d3;
 }
-:root[data-theme] .app-shell .hero-card {
-  background: #203c41;
-}
-:root[data-theme]
-  .app-shell
-  .hero-card
-  :is(strong, small, span, .hero-value, .hero-link) {
-  color: #f2f7f9;
-}
 :root[data-theme]
   .app-shell
   :is(button, a, input, select, textarea, summary, [tabindex]):focus-visible {

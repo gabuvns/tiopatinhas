@@ -1,0 +1,170 @@
+.monthly-investment-goal {
+  padding-top: 20px;
+  margin-top: 20px;
+  border-top: 1px solid var(--edge);
+}
+.monthly-goal-heading,
+.monthly-goal-editor-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.monthly-goal-heading h3 {
+  font-size: 14px;
+  margin: 0 0 5px;
+  font-weight: 650;
+}
+.monthly-goal-heading p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--secondary);
+}
+.monthly-goal-edit,
+.monthly-goal-close,
+.monthly-goal-reset {
+  background: transparent;
+  color: var(--accent);
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  border-radius: 6px;
+}
+.monthly-goal-edit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  margin: -8px -8px 0 0;
+  min-height: 36px;
+  font-size: 12px;
+}
+.monthly-goal-edit:hover,
+.monthly-goal-close:hover,
+.monthly-goal-reset:hover {
+  background: var(--subtle);
+}
+.monthly-goal-amounts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 18px;
+}
+.monthly-goal-amounts strong {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+}
+.monthly-goal-amounts > span {
+  color: var(--secondary);
+  font-size: 12px;
+}
+.monthly-goal-track {
+  height: 6px;
+  background: var(--subtle);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 12px 0 9px;
+}
+.monthly-goal-track > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 180ms;
+}
+.monthly-goal-status {
+  font-size: 12px;
+  margin: 0;
+  color: var(--text);
+}
+.monthly-investment-goal .monthly-goal-footnote,
+.monthly-investment-goal .monthly-goal-help {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--secondary);
+  margin: 8px 0 0;
+}
+.monthly-goal-editor {
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 16px;
+  margin-top: 16px;
+}
+.monthly-goal-editor h4 {
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+.monthly-goal-close {
+  padding: 5px;
+  min-width: 32px;
+  min-height: 32px;
+}
+.monthly-goal-input > span {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+.monthly-goal-input > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.monthly-goal-input input {
+  width: 100px;
+  padding: 9px 10px;
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  min-height: 40px;
+  color: var(--text);
+  background: var(--panel);
+  font: inherit;
+}
+.monthly-goal-editor fieldset {
+  margin: 14px 0;
+  padding: 0;
+  border: 0;
+}
+.monthly-goal-editor legend {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+.monthly-goal-editor fieldset label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+.monthly-goal-editor input[type="radio"] {
+  accent-color: var(--accent);
+  margin: 2px 0 0;
+  flex-shrink: 0;
+}
+.monthly-goal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+.monthly-investment-goal .monthly-goal-error {
+  color: var(--danger);
+  font-size: 12px;
+  margin: 10px 0 0;
+}
+.monthly-goal-reset {
+  font-size: 12px;
+  margin-top: 12px;
+  padding: 8px 0;
+  text-align: left;
+  min-height: 36px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .monthly-goal-track > span {
+    transition: none;
+  }
+}

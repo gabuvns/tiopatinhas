@@ -8,6 +8,7 @@ import {
   type CurrencyRates,
 } from "../domain/domain";
 import { exchangeRates } from "../domain/money";
+import { validateMonthlyGoalSettings } from "../domain/monthlyGoal";
 import architecture from "../../docs/ARCHITECTURE.md?raw";
 import { validateEvents } from "../domain/validation";
 import { createDefaultPockets, type Pocket } from "../domain/pockets";
@@ -22,6 +23,8 @@ export interface AppData {
     currency: "BRL";
     displayCurrency?: DisplayCurrency;
     theme?: "system" | "light" | "dark";
+    savingsGoalPercent?: number;
+    monthlySavingsGoals?: Record<string, number>;
     milestones: number[];
   };
   importInfo?: {
@@ -186,6 +189,7 @@ export function validateData(value: unknown): AppData {
       "Formato incompatível. Use um backup TioPatinhas versão 1 ou 2 (compatível com Finplan).",
     );
   }
+  validateMonthlyGoalSettings(settings);
   if (settings.pockets !== undefined) {
     if (
       !Array.isArray(settings.pockets) ||

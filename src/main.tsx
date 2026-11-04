@@ -16,6 +16,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 
 import "./styles/platform.css";
 import "./styles/accessibility.css";
+import "./styles/refinement.css";
 if (import.meta.env.DEV && new URLSearchParams(location.search).has("audit")) {
   void import("./dev/accessibilityAudit").then((module) =>
     module.installAudit(),

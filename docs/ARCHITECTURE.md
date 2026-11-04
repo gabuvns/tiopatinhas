@@ -52,7 +52,9 @@ settings.theme aceita system, light ou dark, persistido no JSON. src/styles/acce
 
 src/domain/history.ts produz séries sem inventar dados ausentes. O histórico do patrimônio em USD usa apenas usdValue/fxRate salvos no snapshot. Aportes agrupam investment_contribution, illiquid_contribution e compras; preços USD usam o câmbio da operação ou uma referência registrada até sua data. Sem câmbio, o total convertido do mês é indisponível. Receitas e despesas não são aportes e vendas não diminuem o indicador bruto de compras/aportes. Evitar importar consolidado e detalhe do mesmo aporte.
 
-TimeSeriesChart é compartilhado: leitura por ponteiro/toque e slider acessível para teclado, com painel de detalhes. Os gráficos simultâneos usam escalas independentes. Os sliders de cofrinhos compartilham valor com os campos numéricos e respeitam tanto a meta restante quanto a disponibilidade do ativo entre cofrinhos. Reduzir a meta não apaga destinações existentes: exige revisão antes de salvar.
+ComparisonChart reúne as linhas selecionadas em um único gráfico. SeriesPicker oferece seleção múltipla com busca sem distinção de acentos, fechamento por Escape e pelo clique externo. comparisonMonths alinha por mês: último snapshot do mês para saldos, total mensal para aportes, lacunas explícitas sem interpolação. A leitura por ponteiro/toque e o controle de mês para teclado mostram todas as séries na mesma referência. Valores patrimoniais compartilham o eixo esquerdo; aportes usam o direito quando combinados com saldos, com identificação visível. A opção Evolução % indexa cada série em seu primeiro valor positivo, sem representar rentabilidade da carteira. Câmbio histórico permanece congelado no snapshot. Os sliders de cofrinhos compartilham valor com os campos numéricos e respeitam tanto a meta restante quanto a disponibilidade do ativo entre cofrinhos. Reduzir a meta não apaga destinações existentes: exige revisão antes de salvar.
+
+settings.savingsGoalPercent é o percentual padrão das entradas destinado a investimentos; settings.monthlySavingsGoals permite ajustes por YYYY-MM. Ambos aceitam percentuais finitos de 0 a 100. Backups antigos sem esses campos usam 20% como valor inicial editável. A meta do mês é entradas × percentual; o progresso usa investimentos registrados, enquanto a taxa de poupança continua (entradas − saídas)/entradas. Editar uma meta não cria operações financeiras. Definir um padrão remove o ajuste do mês aberto e preserva os demais; remover o ajuste mensal volta ao padrão. Tudo é persistido no JSON e no backup em nuvem.
 
 ## Backup opcional com Firebase
 
@@ -60,7 +62,7 @@ Consulte docs/FIREBASE.md. O módulo é carregado sob demanda ao abrir Conta e b
 
 Nada é enviado automaticamente. O usuário confirma a conta de destino ao salvar e revisa a prévia antes de restaurar. A demonstração e um histórico local ilegível não podem ser enviados à nuvem. Os dados locais permanecem no navegador ao sair do Google; o login protege os backups remotos, não implementa perfis locais multiusuário. Nunca anunciar integração ativada sem configuração e teste com contas reais. Limite de 900 KB por documento; JSON local segue disponível.
 
-O roteiro detalhado de XLSX fica em docs/CONVERSION_PROMPT.md e é exibido e copiado pela interface, mantendo um único contrato de referência.
+O roteiro detalhado de XLSX fica em docs/CONVERSION_PROMPT.md. Dados e conta → Converter planilha abre um diálogo com as etapas de conversão, revisão e importação; o prompt começa recolhido e pode ser copiado ou selecionado manualmente. A importação continua exigindo a prévia do JSON validado. Nenhum arquivo é enviado automaticamente a uma IA. O diálogo preserva foco, Escape e rolagem do fundo. A interface usa refinement.css para superfícies discretas e ritmo tipográfico, preservando tokens de contraste e bordas fortes nos campos.
 
 ## Deploy e validação
 

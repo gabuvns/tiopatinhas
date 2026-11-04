@@ -25,9 +25,9 @@ export default function ThemeControl({
         value={value}
         onChange={(event) => onChange(event.target.value as Theme)}
       >
-        <option value="system">Tema do sistema</option>
-        <option value="light">Tema claro</option>
-        <option value="dark">Tema escuro</option>
+        <option value="system">Sistema</option>
+        <option value="light">Claro</option>
+        <option value="dark">Escuro</option>
       </select>
     </label>
   );

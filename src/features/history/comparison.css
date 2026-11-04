@@ -1,0 +1,438 @@
+.wealth-comparison {
+  --comparison-0: #08776d;
+  --comparison-1: #2766b3;
+  --comparison-2: #7b49aa;
+  --comparison-3: #a24d18;
+  --comparison-4: #56710e;
+  --comparison-5: #a34258;
+  --comparison-6: #0c7287;
+  --comparison-7: #836000;
+  --comparison-8: #4b596b;
+  min-width: 0;
+}
+:root[data-theme="dark"] .wealth-comparison {
+  --comparison-0: #8bd8c3;
+  --comparison-1: #8bbcf3;
+  --comparison-2: #c6a2ed;
+  --comparison-3: #f5b275;
+  --comparison-4: #c5d590;
+  --comparison-5: #f2a9b7;
+  --comparison-6: #8fd7e5;
+  --comparison-7: #e2cb7e;
+  --comparison-8: #bec9d4;
+}
+.app-shell .comparison-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+.app-shell .comparison-heading h2 {
+  margin: 0 0 6px;
+}
+.app-shell .comparison-heading p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--secondary);
+}
+.series-picker {
+  position: relative;
+  flex-shrink: 0;
+}
+.app-shell .series-picker-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 9px 12px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.app-shell .series-picker-trigger:hover,
+.app-shell .series-picker-trigger[aria-expanded="true"] {
+  border-color: var(--accent);
+  background: var(--subtle);
+}
+.series-count {
+  min-width: 20px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--subtle);
+  font-size: 12px;
+  text-align: center;
+}
+.app-shell .series-picker-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 25;
+  width: 320px;
+  max-width: min(360px, calc(100vw - 48px));
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  box-shadow: 0 16px 40px #0003;
+  overflow: hidden;
+}
+.series-picker-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--edge);
+  color: var(--secondary);
+}
+.app-shell .series-picker-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 0;
+  min-height: 32px;
+  outline-offset: 3px;
+}
+.app-shell .series-picker-search button {
+  display: grid;
+  place-items: center;
+  min-width: 32px;
+  min-height: 32px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+.series-picker-list {
+  max-height: 290px;
+  overflow: auto;
+  padding: 6px;
+}
+.app-shell .series-picker-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 8px;
+  border-radius: 5px;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+}
+.series-picker-option:hover,
+.series-picker-option:focus-within {
+  background: var(--subtle);
+}
+.series-picker-option span {
+  flex: 1;
+}
+.app-shell .series-picker-option input {
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  margin: 0;
+  accent-color: var(--accent);
+}
+.series-picker-option svg {
+  color: var(--accent);
+}
+.series-picker-list p {
+  padding: 10px;
+  font-size: 13px;
+}
+.series-picker-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--edge);
+  font-size: 12px;
+  color: var(--secondary);
+}
+.app-shell .series-picker-footer button {
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: var(--subtle);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.comparison-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.comparison-periods,
+.comparison-modes {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.app-shell .comparison-periods button,
+.app-shell .comparison-modes button {
+  min-height: 36px;
+  padding: 6px 11px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--secondary);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.app-shell .comparison-periods button:hover,
+.app-shell .comparison-modes button:hover {
+  background: var(--subtle);
+  color: var(--text);
+}
+.app-shell .comparison-periods button[aria-pressed="true"],
+.app-shell .comparison-modes button[aria-pressed="true"] {
+  background: var(--subtle);
+  color: var(--text);
+  border-color: var(--edge);
+  font-weight: 600;
+}
+.comparison-modes {
+  border-left: 1px solid var(--edge);
+  padding-left: 12px;
+}
+.comparison-date-range {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 15px 0 20px;
+  color: var(--secondary);
+  font-size: 12px;
+}
+.comparison-date-range label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.app-shell .comparison-date-range input {
+  min-height: 36px;
+  min-width: 0;
+  width: 140px;
+  font: inherit;
+  color: var(--text);
+  border: 1px solid var(--edge);
+  background: var(--panel);
+  border-radius: 6px;
+  padding: 6px;
+}
+.comparison-frequency {
+  margin-left: auto;
+}
+.comparison-readout {
+  padding-top: 18px;
+  border-top: 1px solid var(--edge);
+}
+.comparison-readout-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+.comparison-readout-heading span {
+  font-size: 12px;
+  color: var(--secondary);
+}
+.comparison-readout ul {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 2px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 16px 24px;
+}
+.comparison-readout li {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  min-width: 0;
+}
+.comparison-series-name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+}
+.comparison-series-name svg {
+  flex-shrink: 0;
+}
+.app-shell .comparison-readout strong {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 600;
+}
+.app-shell .comparison-readout-heading strong {
+  font-size: 13px;
+}
+.comparison-readout li small {
+  font-size: 11px;
+  color: var(--secondary);
+}
+.comparison-plot-scroll {
+  overflow-x: auto;
+  margin-top: 12px;
+}
+.comparison-plot {
+  display: block;
+  width: 100%;
+  min-width: 560px;
+  touch-action: pan-y;
+}
+.comparison-plot text {
+  font-family: inherit;
+  font-size: 11px;
+  fill: var(--secondary);
+}
+.comparison-plot .comparison-axis-title {
+  font-size: 11px;
+}
+.comparison-grid {
+  stroke: var(--edge);
+  stroke-opacity: 0.3;
+  stroke-dasharray: 3 5;
+}
+.comparison-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.25;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.comparison-point {
+  fill: currentColor;
+  stroke: var(--panel);
+  stroke-width: 1.25;
+}
+.comparison-crosshair {
+  stroke: var(--secondary);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+  pointer-events: none;
+}
+.comparison-explorer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 6px 0 18px;
+  font-size: 12px;
+  color: var(--secondary);
+}
+.comparison-explorer span {
+  min-width: 145px;
+}
+.comparison-explorer strong {
+  margin-left: 5px;
+  font-weight: 500;
+  color: var(--text);
+}
+.app-shell .comparison-explorer input {
+  flex: 1;
+  min-width: 60px;
+  width: 100%;
+  min-height: 28px;
+  accent-color: var(--accent);
+}
+.comparison-empty {
+  padding: 35px 0;
+  text-align: center;
+  color: var(--secondary);
+  font-size: 14px;
+}
+.comparison-date-error {
+  padding: 16px;
+  border-left: 3px solid var(--danger);
+  color: var(--danger);
+}
+.comparison-footnotes {
+  border-top: 1px solid var(--edge);
+  font-size: 12px;
+}
+.app-shell .comparison-footnotes summary {
+  color: var(--secondary);
+  padding: 12px 0;
+  min-height: 40px;
+}
+.comparison-footnotes p {
+  line-height: 1.7;
+  margin: 0 0 12px;
+  max-width: 90ch;
+  color: var(--secondary);
+}
+@media (max-width: 680px) {
+  .app-shell .comparison-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .series-picker {
+    width: 100%;
+  }
+  .app-shell .series-picker-trigger {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .series-picker-trigger .series-count {
+    margin-left: auto;
+  }
+  .app-shell .series-picker-panel {
+    left: 0;
+    right: auto;
+    width: 100%;
+    max-width: 100%;
+  }
+  .comparison-toolbar {
+    gap: 10px;
+  }
+  .comparison-modes {
+    border-left: 0;
+    padding-left: 0;
+  }
+  .comparison-date-range {
+    gap: 8px;
+  }
+  .comparison-frequency {
+    width: 100%;
+    margin-left: 0;
+  }
+  .comparison-readout-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .comparison-readout ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 12px;
+  }
+  .comparison-readout strong {
+    overflow-wrap: anywhere;
+  }
+  .comparison-explorer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .comparison-date-range input {
+    width: 125px;
+  }
+}
