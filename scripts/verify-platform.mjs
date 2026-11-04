@@ -6,7 +6,7 @@ if (!globalThis.crypto)
 const bundle = await build({
   stdin: {
     contents:
-      "export * from './src/infrastructure/store'; export * from './src/domain/domain'; export * from './src/domain/pockets'; export * from './src/features/demo/demo';",
+      "export * from './src/infrastructure/store'; export * from './src/domain/domain'; export * from './src/domain/money'; export * from './src/domain/pockets'; export * from './src/features/demo/demo';",
     resolveDir: process.cwd(),
   },
   loader: { ".md": "text" },
@@ -20,6 +20,7 @@ const {
   validateData,
   createExportSnapshot,
   buildPortfolio,
+  exchangeRates,
   planContribution,
   saveData,
   loadData,
@@ -34,9 +35,96 @@ const {
 const data = validateData(demoData());
 assert.ok(data.events.some((e) => e.memo?.includes("fictícios")));
 assert.ok(data.events.filter((e) => e.type === "wealth_snapshot").length >= 24);
-const portfolio = buildPortfolio(data.events, 5);
+const fx = exchangeRates(data.events).USD;
+const portfolio = buildPortfolio(data.events, fx);
+assert.ok(
+  portfolio.totalValue > 5000000,
+  "Demo illustrates a substantial household portfolio",
+);
+assert.equal(portfolio.positions.length, 22);
+assert.equal(portfolio.illiquidAssets.length, 9);
+assert.equal(new Set(portfolio.positions.map((p) => p.assetClass)).size, 9);
+assert.equal(new Set(portfolio.positions.map((p) => p.geography)).size, 3);
+assert.equal(portfolio.positions.filter((p) => p.isEmergencyReserve).length, 1);
+assert.equal(
+  data.events.filter((e) => e.type === "trade" && e.side === "COMPRA").length,
+  180,
+);
+assert.equal(
+  data.events.filter((e) => e.type === "trade" && e.side === "VENDA").length,
+  24,
+);
+assert.equal(
+  new Set(
+    data.events
+      .filter((e) => e.type === "expense" && e.category === "Cartão")
+      .map((e) => e.cardName),
+  ).size,
+  2,
+);
+assert.equal(
+  new Set(data.events.filter((e) => e.type === "income").map((e) => e.category))
+    .size,
+  3,
+);
+assert.equal(data.events.filter((e) => e.type === "salary_change").length, 3);
+assert.equal(
+  data.events.filter((e) => e.type === "investment_contribution").length,
+  0,
+  "Do not duplicate purchases as aggregate contributions",
+);
+assert.ok(
+  Math.abs(
+    portfolio.positions.reduce((sum, p) => sum + p.targetPercent, 0) - 100,
+  ) < 1e-8,
+);
+for (const pocket of data.settings.pockets)
+  validatePocket(pocket, data.settings.pockets, portfolio.positions);
+assert.ok(
+  pocketBalances(data.settings.pockets, portfolio.positions).every(
+    (p) => p.shortfall === 0,
+  ),
+);
+const monthlySnapshots = data.events.filter(
+  (e) => e.type === "wealth_snapshot",
+);
+assert.equal(monthlySnapshots.length, 36);
+for (const snapshot of monthlySnapshots) {
+  const atDate = buildPortfolio(
+    data.events.filter((e) => e.date <= snapshot.date),
+    snapshot.fxRate,
+  );
+  assert.ok(
+    Math.abs(atDate.totalValue - snapshot.totalValue) < 0.005,
+    "Historical snapshot reconciles to historical positions",
+  );
+  assert.ok(
+    Math.abs(
+      snapshot.liquidValue + snapshot.illiquidValue - snapshot.totalValue,
+    ) < 0.005,
+  );
+  assert.ok(snapshot.liquidValue > 0 && snapshot.illiquidValue > 0);
+  for (const code of ["BRL", "USD", "EUR", "GBP", "CHF"])
+    assert.ok(
+      Math.abs(
+        snapshot.currencyValues[code] * snapshot.currencyRates[code] -
+          snapshot.totalValue,
+      ) < 0.005,
+    );
+}
+for (const asOf of ["2026-01-01", "2024-02-29"]) {
+  const boundary = validateData(demoData(asOf));
+  assert.ok(
+    boundary.events.every((e) => e.date <= asOf),
+    "No future demo transactions, including on the first day of a month",
+  );
+  assert.equal(
+    boundary.events.filter((e) => e.type === "wealth_snapshot").length,
+    36,
+  );
+}
 for (const budget of [0, 1, 1000, 10000]) {
-  const actions = planContribution(portfolio.positions, budget, 5);
+  const actions = planContribution(portfolio.positions, budget, fx);
   assert.ok(actions.every((a) => a.side === "COMPRAR"));
   assert.ok(actions.reduce((sum, a) => sum + a.amount, 0) <= budget + 1e-8);
   assert.ok(
@@ -60,9 +148,11 @@ const snapshot = exported.events.at(-1);
 assert.ok(snapshot.fxRate > 0);
 assert.equal(snapshot.usdValue, snapshot.totalValue / snapshot.fxRate);
 assert.equal(JSON.stringify(data.events), original);
-assert.equal(
-  Object.values(snapshot.byCategory).reduce((a, b) => a + b, 0),
-  snapshot.totalValue,
+assert.ok(
+  Math.abs(
+    Object.values(snapshot.byCategory).reduce((a, b) => a + b, 0) -
+      snapshot.totalValue,
+  ) < 0.005,
 );
 const changed = createExportSnapshot({
   ...exported,

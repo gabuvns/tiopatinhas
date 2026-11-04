@@ -42,6 +42,9 @@ export function pocketBalances(pockets: Pocket[], positions: PocketAsset[]) {
       const available =
         asset && !asset.isEmergencyReserve ? Math.max(0, asset.value) : 0;
       const allRequests = requestedByAsset.get(item.assetId) ?? 0;
+      // Preserve exact requested amounts when fully funded; proportional arithmetic
+      // can otherwise create a tiny, false shortfall in a healthy pocket.
+      if (allRequests <= available) return sum + item.amount;
       return (
         sum +
         (allRequests > 0

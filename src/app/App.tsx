@@ -650,6 +650,12 @@ function App() {
   }
 
   async function refreshQuotes() {
+    if (demo) {
+      notify(
+        "A demonstração usa preços e câmbios fictícios, preservados para explorar a carteira.",
+      );
+      return;
+    }
     const generation = dataGeneration.current;
     setQuoteBusy(true);
     const latest: LedgerEvent[] = [];
