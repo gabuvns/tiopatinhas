@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { webcrypto } from "node:crypto";
 import { build } from "esbuild";
-globalThis.crypto = webcrypto;
+if (!globalThis.crypto) Object.defineProperty(globalThis, "crypto", { value: webcrypto });
 async function load(entry) {
   const result = await build({
     loader: { ".md": "text" },

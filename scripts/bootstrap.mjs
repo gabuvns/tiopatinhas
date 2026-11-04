@@ -9,7 +9,7 @@ const manifest = {
     build: "tsc -b && vite build",
     preview: "vite preview",
     check:
-      "node scripts/verify-planning.mjs && node scripts/verify-storage.mjs && node scripts/verify-export.mjs && node scripts/verify-currency-categories.mjs",
+      "node scripts/verify-planning.mjs && node scripts/verify-storage.mjs && node scripts/verify-export.mjs && node scripts/verify-currency-categories.mjs && node scripts/verify-platform.mjs",
   },
   dependencies: {
     "@vitejs/plugin-react": "4.3.4",

@@ -278,6 +278,7 @@ export function createExportSnapshot(data: AppData): AppData {
   });
   return {
     ...data,
+    settings: { ...data.settings, pockets: data.settings.pockets ?? [{ id: "fun-spending", name: "Banco do Tio Patinhas", target: 5000, allocations: [] }] },
     documentation: { architecture, version: 1 },
     updatedAt: snapshot.createdAt,
     events: [...data.events, snapshot],

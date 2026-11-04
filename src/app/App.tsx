@@ -371,6 +371,10 @@ function App() {
   }
 
   function setReserve(position: Position, selected: boolean) {
+    if (selected && data.settings.pockets?.some((p) => p.allocations.some((a) => a.assetId === position.assetId && a.amount > 0))) {
+      notify("Remova a destinação deste ativo dos cofrinhos antes de incluí-lo na reserva.");
+      return;
+    }
     if (
       selected &&
       data.settings.pockets?.some((p) =>

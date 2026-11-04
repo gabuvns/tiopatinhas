@@ -215,7 +215,7 @@ globalThis.localStorage = {
 };
 await saveData(data);
 assert.equal((await loadData()).settings.displayCurrency, "USD");
-globalThis.crypto = (await import("node:crypto")).webcrypto;
+if (!globalThis.crypto) Object.defineProperty(globalThis, "crypto", { value: (await import("node:crypto")).webcrypto });
 const exported = createExportSnapshot(data);
 assert.equal(exported.settings.currency, "BRL");
 assert.equal(exported.settings.displayCurrency, "USD");

@@ -95,7 +95,7 @@ export default function Pockets({
               s +
               (a.amount /
                 Math.max(
-                  1,
+                  Number.EPSILON,
                   pockets
                     .flatMap((v) => v.allocations)
                     .filter((v) => v.assetId === a.assetId)
@@ -106,7 +106,7 @@ export default function Pockets({
                     .flatMap((v) => v.allocations)
                     .filter((v) => v.assetId === a.assetId)
                     .reduce((s, v) => s + v.amount, 0),
-                  positions.find((v) => v.assetId === a.assetId)?.value ?? 0,
+                  positions.find((v) => v.assetId === a.assetId && !v.isEmergencyReserve)?.value ?? 0,
                 ),
             0,
           );
