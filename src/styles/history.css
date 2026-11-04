@@ -1,0 +1,60 @@
+:root .app-shell .wealth-last {
+  display: grid;
+  gap: 5px;
+  text-align: right;
+}
+:root .app-shell .wealth-last strong {
+  font-size: 26px;
+  color: #a4efc5;
+}
+:root .app-shell .wealth-chart-scroll {
+  overflow-x: auto;
+  margin: 22px 0 10px;
+}
+:root .app-shell .wealth-chart {
+  display: block;
+  width: 100%;
+  min-width: 600px;
+  max-height: 330px;
+}
+:root .app-shell .wealth-chart text {
+  font-size: 14px;
+  fill: #b4c3d2;
+}
+.wealth-grid {
+  stroke: #2a3848;
+  stroke-width: 1;
+}
+.wealth-line {
+  stroke: #76dfab;
+  stroke-width: 3;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+.wealth-fill {
+  fill: #76dfab14;
+}
+.wealth-point {
+  fill: #a4efc5;
+  stroke: #163b30;
+  stroke-width: 1.5;
+}
+:root .app-shell .wealth-history-note {
+  font-size: 14px;
+  color: #aab8c7;
+  margin: 12px 0 18px;
+}
+:root .app-shell .wealth-history summary {
+  cursor: pointer;
+  user-select: none;
+  color: #a4efc5;
+}
+.wealth-history details[open] summary {
+  margin-bottom: 16px;
+}
+@media (max-width: 680px) {
+  :root .app-shell .wealth-last {
+    text-align: left;
+    margin-top: 10px;
+  }
+}

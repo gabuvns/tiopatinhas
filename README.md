@@ -1,4 +1,4 @@
-# Finplan
+# TioPatinhas
 
 Aplicação web local para acompanhar fluxo de caixa, carteira e patrimônio. Não há servidor de aplicação nem conta de usuário: o histórico fica no navegador e pode ser exportado ou restaurado como JSON.
 
@@ -7,6 +7,7 @@ Aplicação web local para acompanhar fluxo de caixa, carteira e patrimônio. N�
 Requer Node.js 18 ou superior.
 
 ```sh
+node scripts/bootstrap.mjs
 npm install
 npm run dev
 ```
@@ -67,3 +68,7 @@ node scripts/verify-export.mjs
 ```
 
 O teste de importação aceita o backup e os controles de origem como arquivos externos: `node scripts/verify-import.mjs backup.json controles.json`.
+
+## Arquitetura e privacidade
+
+Leia docs/ARCHITECTURE.md antes de alterar contratos. Nunca versione JSON. Regere manifestos com node scripts/bootstrap.mjs. Demo fictícia em src/features/demo/demo.ts. O deploy publica somente dist. Migre dados entre localhost e Pages por backup. Histórico USD novo mantém o câmbio capturado; valores legados ausentes não são inventados.

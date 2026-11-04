@@ -1,0 +1,324 @@
+:root {
+  color-scheme: light;
+  background: #f5f3ed;
+  --ink: #243140;
+  --muted: #637080;
+  --line: #d9ddd9;
+  --surface: #fff;
+  --green: #286c63;
+}
+body {
+  background: #f5f3ed;
+}
+:root .app-shell {
+  color: #243140;
+  font-family: Inter, "Segoe UI", sans-serif;
+}
+:root .app-shell .main-area {
+  background: #f5f3ed;
+}
+:root .app-shell :is(h1, h2, h3, strong, b) {
+  color: #243140;
+}
+:root .app-shell :is(p, small, .cell-secondary, .eyebrow) {
+  color: #637080;
+}
+:root .app-shell .sidebar {
+  background: #17292f;
+  border: 0;
+}
+:root .app-shell .sidebar :is(strong, small, .brand-name) {
+  color: #e7ece6;
+}
+:root .app-shell .brand,
+:root .app-shell .brand * {
+  user-select: none;
+  cursor: default;
+}
+:root .app-shell .brand {
+  padding: 0 2px;
+}
+:root .app-shell .brand-name {
+  font-size: 24px;
+  letter-spacing: -1px;
+  white-space: nowrap;
+}
+:root
+  .app-shell
+  :is(
+    .brand-mark,
+    .hero-orbit,
+    .hero-side-mark,
+    .heading-period,
+    .eyebrow-dot
+  ) {
+  display: none;
+}
+:root .app-shell .profile-chip {
+  background: #21363d;
+  border-color: #32484d;
+}
+:root .app-shell .nav-item.active {
+  background: #36504c;
+  color: #f5e9c7;
+}
+:root .app-shell .nav-item:hover {
+  background: #294047;
+}
+:root .app-shell .topbar {
+  background: #faf9f5;
+  border-color: #d9ddd9;
+}
+:root .app-shell :is(.panel, .metric-card) {
+  background: #fff;
+  border-color: #d9ddd9;
+  box-shadow: none;
+  border-radius: 12px;
+}
+:root .app-shell .metric-card:hover {
+  background: #fafbf8;
+  border-color: #80998c;
+}
+:root .app-shell .hero-card {
+  background: #203c41;
+  border: 0;
+  border-radius: 12px;
+  box-shadow: none;
+  min-height: 205px;
+}
+:root .app-shell .hero-card * {
+  color: #f2f2e9;
+}
+:root .app-shell .button-primary {
+  background: #286c63;
+  color: white;
+  border-color: #286c63;
+  box-shadow: none;
+}
+:root .app-shell .button-primary:hover {
+  background: #1e504b;
+}
+:root .app-shell :is(.button-outline, .month-picker, .currency-switch) {
+  background: #f6f7f2;
+  color: #344b50;
+  border-color: #c5cfca;
+}
+:root .app-shell :is(.button-outline, .month-picker, .currency-switch):hover {
+  background: #e4eee8;
+  color: #183b38;
+  border-color: #66887c;
+}
+:root .app-shell .button-quiet {
+  color: #45605e;
+}
+:root
+  .app-shell
+  :is(
+    .field input,
+    .field select,
+    .category-filter select,
+    .target-input,
+    .input-with-prefix,
+    .input-with-suffix,
+    .money-input,
+    .category-search,
+    .reserve-search
+  ) {
+  background: #fafbf8;
+  color: #253d45;
+  border-color: #bac9c3;
+}
+:root .app-shell :is(input, select, textarea) {
+  color: #253d45;
+}
+:root
+  .app-shell
+  :is(
+    .goal-item,
+    .forecast-baseline,
+    .asset-category > summary,
+    .reserve-option,
+    .pie-legend-row,
+    .activity-row:hover
+  ) {
+  background: #f4f7f3;
+  border-color: #d6e0d7;
+  color: #243140;
+}
+:root
+  .app-shell
+  :is(
+    .goal-item strong,
+    .reserve-summary strong,
+    .projection-result strong,
+    .category-total strong,
+    .pie-detail strong
+  ) {
+  color: #245f57;
+}
+:root
+  .app-shell
+  :is(
+    .projection-result,
+    .milestone-overview,
+    .savings-note,
+    .form-callout,
+    .rebalance-intro
+  ) {
+  background: #edf3e9;
+  border-color: #ccd9c9;
+  color: #344c42;
+}
+:root .app-shell th {
+  background: #edf1ec;
+  color: #516159;
+  border-color: #d9ddd9;
+}
+:root .app-shell td {
+  color: #243140;
+  border-color: #e0e5df;
+}
+:root .app-shell tbody tr:hover td {
+  background: #f0f6ef;
+}
+:root .app-shell :is(.quick-action, .pie-legend-row):hover {
+  background: #e9f1e8;
+}
+:root
+  .app-shell
+  :is(
+    .panel-more,
+    .panel-bottom-link button,
+    .empty-inline button,
+    .currency-switch .currency-active
+  ) {
+  color: #286c63;
+}
+:root .app-shell :is(.modal-card, .confirm-card) {
+  background: #fff;
+  border-color: #c4d0c8;
+}
+:root .app-shell .progress-track {
+  background: #dfe8df;
+}
+:root .app-shell .wealth-chart text,
+:root .app-shell .projection-chart text {
+  fill: #637080;
+}
+.wealth-grid {
+  stroke: #d5ded7;
+}
+.wealth-line {
+  stroke: #286c63;
+}
+.wealth-point {
+  fill: #286c63;
+  stroke: #fff;
+}
+.wealth-fill {
+  fill: #286c6312;
+}
+:root .app-shell summary {
+  color: #286c63;
+}
+:root .app-shell .reserve-selected {
+  background: #e0eee1;
+  border-color: #6b9680;
+}
+.history-controls {
+  display: flex;
+  align-items: end;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+.history-controls .field {
+  flex: 1;
+  min-width: 150px;
+}
+.pockets-panel {
+  margin-bottom: 24px;
+}
+.pocket-editor {
+  margin-top: 24px;
+  border-top: 1px solid #ccd9c9;
+  padding-top: 20px;
+}
+.pocket-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  max-height: 360px;
+  overflow: auto;
+  padding: 16px 0;
+}
+.import-guide {
+  margin: 24px 28px;
+}
+.import-guide textarea {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid #ccd9c9;
+  background: #fafbf8;
+  resize: vertical;
+  font: 14px/1.6 monospace;
+}
+.demo-banner {
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  background: #f2e9c9;
+  border: 1px solid #c9b777;
+  border-radius: 8px;
+}
+:root .app-shell .loading-screen {
+  background: #f5f3ed;
+  color: #243140;
+}
+:root .app-shell .top-actions {
+  flex-wrap: wrap;
+}
+:root .app-shell .icon-button:hover {
+  background: #e0e9df;
+  color: #286c63;
+}
+:root .app-shell .asset-category > summary:hover {
+  background: #e2eee4;
+}
+:root .app-shell button:focus-visible,
+:root .app-shell summary:focus-visible {
+  outline-color: #286c63;
+}
+@media (max-width: 680px) {
+  .history-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .history-controls .goal-actions {
+    grid-column: 1/-1;
+    flex-wrap: wrap;
+  }
+  .history-controls .field {
+    min-width: 0;
+  }
+  .import-guide {
+    margin: 20px 16px;
+  }
+}
+
+:root .app-shell .panel-heading p,
+:root .app-shell .page-heading-row p,
+:root .app-shell .section-title-row p,
+:root .app-shell .category-total small,
+:root .app-shell .pie-detail span,
+:root .app-shell .forecast-baseline span,
+:root .app-shell .field > span,
+:root .app-shell .projection-breakdown > span {
+  color: #637080;
+}
+:root .app-shell .category-label small {
+  color: #426759;
+  border-color: #b5cbbd;
+}
+:root .app-shell .pockets-panel .goal-grid {
+  margin-bottom: 20px;
+}

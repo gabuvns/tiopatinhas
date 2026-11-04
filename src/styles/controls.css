@@ -1,0 +1,61 @@
+/* Action labels behave as controls, while content and editable values stay selectable. */
+button,
+button *,
+a,
+a *,
+select,
+select *,
+.trade-toggle label,
+.trade-toggle label *,
+input[type="date"],
+input[type="month"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+button,
+a,
+select,
+input[type="date"],
+input[type="month"],
+.trade-toggle label {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: wait;
+}
+.month-control {
+  position: relative;
+  display: inline-flex;
+}
+:root .app-shell button.month-picker {
+  min-height: 44px;
+  padding: 10px 13px;
+  gap: 10px;
+  color: #dbe7f1;
+  font-size: 15px;
+}
+:root .app-shell .month-picker span {
+  text-transform: capitalize;
+}
+:root .app-shell .month-picker:hover {
+  background: #243549;
+  border-color: #76dfab;
+}
+:root .app-shell .month-picker:focus-visible {
+  outline: 3px solid #76dfab;
+  outline-offset: 3px;
+}
+.month-picker-native {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}

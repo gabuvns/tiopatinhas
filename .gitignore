@@ -2,3 +2,16 @@ node_modules/
 dist/
 *.tsbuildinfo
 .vite/
+# Personal information: never version JSON, spreadsheets or exports.
+*.json
+*.json5
+*.jsonl
+*.xlsx
+*.xls
+*.csv
+*.tsv
+outputs/
+work/
+backups/
+.env
+.env.*
