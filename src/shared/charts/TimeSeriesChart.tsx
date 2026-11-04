@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Currency } from "../../domain/domain";
+import type { DisplayCurrency } from "../../domain/domain";
 import type { ChartPoint } from "../../domain/history";
 export default function TimeSeriesChart({
   title,
@@ -10,7 +10,7 @@ export default function TimeSeriesChart({
 }: {
   title: string;
   points: ChartPoint[];
-  currency: Currency;
+  currency: DisplayCurrency;
   bars?: boolean;
   area?: boolean;
 }) {

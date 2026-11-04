@@ -1,4 +1,8 @@
 export type Currency = "BRL" | "USD";
+export const displayCurrencies = ["BRL", "USD", "EUR", "GBP", "CHF"] as const;
+export type DisplayCurrency = (typeof displayCurrencies)[number];
+/** BRL per one unit of the currency. BRL is always 1. */
+export type CurrencyRates = Partial<Record<DisplayCurrency, number>>;
 export type Geography = "Brasil" | "Exterior" | "Cripto";
 export type AssetClass =
   | "Ações"
@@ -63,6 +67,8 @@ export interface WealthSnapshotEvent extends BaseEvent {
   totalValue: number;
   usdValue?: number;
   fxRate?: number;
+  currencyValues?: Partial<Record<DisplayCurrency, number>>;
+  currencyRates?: CurrencyRates;
   byCategory?: Record<string, number>;
   origin?: "export";
   liquidValue?: number;

@@ -1,10 +1,13 @@
 import {
-  activeEvents,
   buildPortfolio,
+  displayCurrencies,
   makeEvent,
   today,
   type LedgerEvent,
+  type DisplayCurrency,
+  type CurrencyRates,
 } from "../domain/domain";
+import { exchangeRates } from "../domain/money";
 import architecture from "../../docs/ARCHITECTURE.md?raw";
 import { validateEvents } from "../domain/validation";
 import { createDefaultPockets, type Pocket } from "../domain/pockets";
@@ -17,7 +20,7 @@ export interface AppData {
   settings: {
     pockets?: Pocket[];
     currency: "BRL";
-    displayCurrency?: "BRL" | "USD";
+    displayCurrency?: DisplayCurrency;
     theme?: "system" | "light" | "dark";
     milestones: number[];
   };
@@ -173,7 +176,7 @@ export function validateData(value: unknown): AppData {
     (settings.theme !== undefined &&
       !["system", "light", "dark"].includes(settings.theme)) ||
     (settings.displayCurrency !== undefined &&
-      !["BRL", "USD"].includes(settings.displayCurrency)) ||
+      !displayCurrencies.includes(settings.displayCurrency)) ||
     !Array.isArray(settings.milestones) ||
     !settings.milestones.every(
       (item) => typeof item === "number" && Number.isFinite(item) && item > 0,
@@ -258,20 +261,14 @@ export function validateData(value: unknown): AppData {
 
 export function createExportSnapshot(data: AppData): AppData {
   const date = today();
-  const quotes = activeEvents(data.events)
-    .filter(
-      (event) =>
-        event.type === "quote" &&
-        event.assetId === "FX:USD/BRL" &&
-        event.date <= date,
-    )
-    .sort(
-      (a, b) =>
-        b.date.localeCompare(a.date) ||
-        Date.parse(b.createdAt) - Date.parse(a.createdAt),
-    );
-  const fx = quotes[0]?.type === "quote" ? quotes[0].price : 0;
+  const currencyRates = exchangeRates(data.events, date);
+  const fx = currencyRates.USD ?? 0;
   const portfolio = buildPortfolio(data.events, fx);
+  const currencyValues: CurrencyRates = {};
+  for (const currency of displayCurrencies) {
+    const rate = currencyRates[currency];
+    if (rate) currencyValues[currency] = portfolio.totalValue / rate;
+  }
   const byCategory: Record<string, number> = {};
   [...portfolio.positions, ...portfolio.illiquidAssets].forEach((p) => {
     byCategory[p.assetClass] = (byCategory[p.assetClass] ?? 0) + p.value;
@@ -284,6 +281,8 @@ export function createExportSnapshot(data: AppData): AppData {
     liquidValue: portfolio.liquidValue,
     illiquidValue: portfolio.illiquidValue,
     byCategory,
+    currencyValues,
+    currencyRates,
     ...(fx > 0 ? { usdValue: portfolio.totalValue / fx, fxRate: fx } : {}),
     memo: "Patrimônio calculado no momento da exportação, usando as cotações e avaliações salvas.",
   });

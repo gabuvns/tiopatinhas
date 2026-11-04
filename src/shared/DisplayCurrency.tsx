@@ -1,6 +1,10 @@
 import { createContext, useContext } from "react";
-import { type Currency } from "../domain/domain";
-import { moneyDisplay } from "../domain/money";
+import {
+  displayCurrencies,
+  type CurrencyRates,
+  type DisplayCurrency,
+} from "../domain/domain";
+import { currencyLabels, moneyDisplay } from "../domain/money";
 
 export const DisplayCurrencyContext = createContext(moneyDisplay("BRL", 0));
 export const useDisplayCurrency = () => useContext(DisplayCurrencyContext);
@@ -8,37 +12,38 @@ export const useDisplayCurrency = () => useContext(DisplayCurrencyContext);
 export function CurrencySwitch({
   currency,
   usdBrl,
+  rates = {},
   onChange,
 }: {
-  currency: Currency;
+  currency: DisplayCurrency;
   usdBrl: number;
-  onChange: (currency: Currency) => void;
+  rates?: CurrencyRates;
+  onChange: (currency: DisplayCurrency) => void;
 }) {
-  const unavailable = currency === "BRL" && !(usdBrl > 0);
+  const available =
+    currency === "BRL" || (currency === "USD" ? usdBrl : rates[currency]);
   return (
-    <div
+    <label
       className="currency-control"
-      title={
-        unavailable
-          ? "Atualize as cotações ou informe USD/BRL para ver valores em dólar."
-          : "Alternar a moeda de exibição. Conversão pelo câmbio de referência atual."
-      }
+      title="Moeda de exibição. Atualize as cotações ou informe o câmbio manualmente na carteira."
     >
-      <button
-        type="button"
-        className="currency-switch"
-        role="switch"
-        aria-label="Exibir valores em dólar"
-        aria-checked={currency === "USD"}
-        disabled={unavailable}
-        onClick={() => onChange(currency === "USD" ? "BRL" : "USD")}
+      <span className="sr-only">Moeda de exibição</span>
+      <select
+        aria-label="Moeda de exibição"
+        value={currency}
+        onChange={(e) => onChange(e.target.value as DisplayCurrency)}
       >
-        <span className={currency === "BRL" ? "currency-active" : ""}>BRL</span>
-        <span className="currency-toggle" aria-hidden="true">
-          <i />
+        {displayCurrencies.map((code) => (
+          <option key={code} value={code}>
+            {code} · {currencyLabels[code]}
+          </option>
+        ))}
+      </select>
+      {!available && (
+        <span role="status" className="currency-missing">
+          Sem câmbio
         </span>
-        <span className={currency === "USD" ? "currency-active" : ""}>USD</span>
-      </button>
-    </div>
+      )}
+    </label>
   );
 }

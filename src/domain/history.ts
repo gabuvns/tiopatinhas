@@ -2,9 +2,10 @@ import {
   activeEvents,
   today,
   wealthHistory,
-  type Currency,
+  type DisplayCurrency,
   type LedgerEvent,
 } from "./domain";
+import { snapshotRate, snapshotValue } from "./money";
 export interface ChartPoint {
   id: string;
   date: string;
@@ -22,7 +23,7 @@ export const historyViews = {
 export function historySeries(
   events: LedgerEvent[],
   view: string,
-  currency: Currency,
+  currency: DisplayCurrency,
   from = "",
   to = "",
   asOf = today(),
@@ -41,13 +42,14 @@ export function historySeries(
               : view === "illiquid"
                 ? point.illiquidValue
                 : point.byCategory?.[view];
+        const rate = snapshotRate(point, currency);
         const value =
           currency === "BRL"
             ? brl
             : view === "total"
-              ? point.usdValue
-              : brl !== undefined && point.fxRate
-                ? brl / point.fxRate
+              ? snapshotValue(point, currency)
+              : brl !== undefined && rate
+                ? brl / rate
                 : undefined;
         return {
           id: point.id,
@@ -67,15 +69,25 @@ export function historySeries(
   );
   const fx = records.filter(
     (event) =>
-      (event.type === "quote" && event.assetId === "FX:USD/BRL") ||
-      (event.type === "wealth_snapshot" && event.fxRate),
+      (event.type === "quote" &&
+        event.assetId.startsWith("FX:") &&
+        event.currency === "BRL") ||
+      event.type === "wealth_snapshot",
   );
-  const rateAt = (date: string) => {
-    const event = fx.filter((event) => event.date <= date).slice(-1)[0];
+  const rateAt = (date: string, unit: DisplayCurrency = "USD") => {
+    if (unit === "BRL") return 1;
+    const event = fx
+      .filter(
+        (event) =>
+          event.date <= date &&
+          ((event.type === "quote" && event.assetId === `FX:${unit}/BRL`) ||
+            (event.type === "wealth_snapshot" && snapshotRate(event, unit))),
+      )
+      .slice(-1)[0];
     return event?.type === "quote"
       ? event.price
       : event?.type === "wealth_snapshot"
-        ? event.fxRate
+        ? snapshotRate(event, unit)
         : undefined;
   };
   const groups = new Map<
@@ -123,7 +135,15 @@ export function historySeries(
       event.type === "investment_contribution" ||
       event.type === "illiquid_contribution"
     ) {
-      const amount = currency === "BRL" ? brl : usd;
+      const rate = rateAt(event.date, currency);
+      const amount =
+        currency === "BRL"
+          ? brl
+          : currency === "USD"
+            ? usd
+            : brl !== undefined && rate
+              ? brl / rate
+              : undefined;
       group.count++;
       if (amount === undefined) group.missing++;
       else group.amount += amount;

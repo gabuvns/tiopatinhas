@@ -2,6 +2,7 @@ import { emptyData, type AppData } from "../../infrastructure/store";
 import { makeEvent, today } from "../../domain/domain";
 export function demoData(): AppData {
   const data = emptyData();
+  const currencyRates = { BRL: 1, USD: 5, EUR: 6, GBP: 7.5, CHF: 6.25 };
   const now = new Date();
   for (let m = 23; m >= 0; m--) {
     const date = new Date(now.getFullYear(), now.getMonth() - m, 1);
@@ -45,6 +46,15 @@ export function demoData(): AppData {
         totalValue: total,
         usdValue: total / 5,
         fxRate: 5,
+        liquidValue: total,
+        illiquidValue: 0,
+        currencyRates: { ...currencyRates },
+        currencyValues: Object.fromEntries(
+          Object.entries(currencyRates).map(([code, rate]) => [
+            code,
+            total / rate,
+          ]),
+        ),
         byCategory: { "Renda fixa": total * 0.6, ETFs: total * 0.4 },
       }),
     );
@@ -79,16 +89,18 @@ export function demoData(): AppData {
       averageCost: 80,
       precision: 0,
     }),
-    makeEvent({
-      type: "quote",
-      date: today(),
-      assetId: "FX:USD/BRL",
-      ticker: "USD/BRL",
-      price: 5,
-      currency: "BRL",
-      source: "Demonstração fictícia",
-      fetchedAt: new Date().toISOString(),
-    }),
+    ...(["USD", "EUR", "GBP", "CHF"] as const).map((code) =>
+      makeEvent({
+        type: "quote",
+        date: today(),
+        assetId: `FX:${code}/BRL`,
+        ticker: `${code}/BRL`,
+        price: currencyRates[code],
+        currency: "BRL",
+        source: "Demonstração fictícia",
+        fetchedAt: new Date().toISOString(),
+      }),
+    ),
   );
   data.settings.pockets = [
     {

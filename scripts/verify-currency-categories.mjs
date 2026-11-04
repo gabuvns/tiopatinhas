@@ -14,6 +14,7 @@ const compiled = await build({
   stdin: {
     contents: [
       "export * from './src/domain/money';",
+      "export * from './src/domain/history';",
       "export * from './src/domain/portfolioGroups';",
       "export * from './src/shared/DisplayCurrency';",
       "export * from './src/features/portfolio/PortfolioAssets';",
@@ -52,6 +53,8 @@ const compiled = await build({
 });
 const {
   convertCurrency,
+  historySeries,
+  snapshotValue,
   moneyDisplay,
   groupAssets,
   DisplayCurrencyContext,
@@ -200,7 +203,7 @@ assert.equal(
 assert.throws(() =>
   validateData({
     ...data,
-    settings: { ...data.settings, displayCurrency: "EUR" },
+    settings: { ...data.settings, displayCurrency: "JPY" },
   }),
 );
 const memory = new Map();
@@ -215,11 +218,141 @@ globalThis.localStorage = {
 };
 await saveData(data);
 assert.equal((await loadData()).settings.displayCurrency, "USD");
-if (!globalThis.crypto) Object.defineProperty(globalThis, "crypto", { value: (await import("node:crypto")).webcrypto });
+if (!globalThis.crypto)
+  Object.defineProperty(globalThis, "crypto", {
+    value: (await import("node:crypto")).webcrypto,
+  });
 const exported = createExportSnapshot(data);
 assert.equal(exported.settings.currency, "BRL");
 assert.equal(exported.settings.displayCurrency, "USD");
 assert.equal(exported.events[0].totalValue, 0);
+const rates = { BRL: 1, USD: 5, EUR: 6, GBP: 7.5, CHF: 6.25 };
+for (const code of ["BRL", "USD", "EUR", "GBP", "CHF"]) {
+  assert.equal(convertCurrency(600, "BRL", code, 5, rates), 600 / rates[code]);
+  assert.equal(convertCurrency(120, "USD", code, 5, rates), 600 / rates[code]);
+  assert.equal(convertCurrency(80, "GBP", code, 5, rates), 600 / rates[code]);
+  const selected = {
+    ...data,
+    settings: { ...data.settings, displayCurrency: code },
+  };
+  assert.equal(validateData(selected).settings.displayCurrency, code);
+  await saveData(selected);
+  assert.equal((await loadData()).settings.displayCurrency, code);
+}
+assert.equal(moneyDisplay("EUR", 5).formatMoney(100), "Sem câmbio");
+assert.equal(convertCurrency(0, "BRL", "CHF", 5), null);
+const stamp = { date: "2020-01-01", createdAt: "2020-01-01T00:00:00Z" };
+const quotes = Object.entries(rates)
+  .filter(([code]) => code !== "BRL")
+  .map(([code, rate]) => ({
+    ...stamp,
+    id: code,
+    type: "quote",
+    assetId: `FX:${code}/BRL`,
+    ticker: `${code}/BRL`,
+    currency: "BRL",
+    price: rate,
+    source: "Fictitious test",
+    fetchedAt: stamp.createdAt,
+  }));
+const multi = createExportSnapshot({
+  ...data,
+  settings: { ...data.settings, displayCurrency: "CHF" },
+  events: [
+    ...quotes,
+    {
+      ...stamp,
+      id: "capital",
+      type: "illiquid_valuation",
+      assetId: "test-house",
+      name: "Fictitious house",
+      assetClass: "Imóveis",
+      amount: 600,
+    },
+  ],
+});
+const snapshot = multi.events.at(-1);
+assert.deepEqual(snapshot.currencyRates, rates);
+assert.deepEqual(snapshot.currencyValues, {
+  BRL: 600,
+  USD: 120,
+  EUR: 100,
+  GBP: 80,
+  CHF: 96,
+});
+assert.equal(snapshot.usdValue, 120);
+assert.equal(snapshot.fxRate, 5);
+const roundTrip = validateData(JSON.parse(JSON.stringify(multi)));
+assert.deepEqual(roundTrip.events, multi.events);
+assert.equal(roundTrip.settings.displayCurrency, "CHF");
+const later = createExportSnapshot({
+  ...multi,
+  events: [
+    ...multi.events,
+    {
+      ...quotes[1],
+      id: "eur-new",
+      date: snapshot.date,
+      createdAt: snapshot.createdAt,
+      price: 12,
+    },
+  ],
+});
+assert.equal(later.events.at(-1).currencyValues.EUR, 50);
+assert.equal(
+  historySeries(later.events, "total", "EUR")[0].value,
+  100,
+  "Old snapshot preserves saved EUR despite later rate",
+);
+assert.equal(historySeries(later.events, "illiquid", "CHF")[0].value, 96);
+assert.equal(
+  snapshotValue(
+    {
+      ...stamp,
+      id: "legacy",
+      type: "wealth_snapshot",
+      totalValue: 600,
+      usdValue: 120,
+      fxRate: 5,
+    },
+    "EUR",
+  ),
+  undefined,
+);
+const contribution = {
+  ...stamp,
+  id: "contribution",
+  type: "investment_contribution",
+  amount: 600,
+  liquidity: "liquid",
+  category: "Test",
+};
+assert.equal(
+  historySeries([...quotes, contribution], "contributions", "GBP")[0].value,
+  80,
+);
+assert.equal(
+  historySeries(
+    [contribution, { ...quotes[1], date: "2020-02-01" }],
+    "contributions",
+    "EUR",
+  )[0].value,
+  null,
+  "Future FX cannot fill missing history",
+);
+for (const invalid of [
+  { ...snapshot, currencyValues: { ...snapshot.currencyValues, EUR: 101 } },
+  { ...snapshot, currencyRates: { ...snapshot.currencyRates, CHF: 0 } },
+  { ...snapshot, currencyRates: { ...snapshot.currencyRates, JPY: 1 } },
+  { ...snapshot, currencyRates: { ...snapshot.currencyRates, BRL: 2 } },
+  { ...snapshot, currencyRates: [] },
+  { ...snapshot, currencyValues: undefined },
+  { ...snapshot, fxRate: 9 },
+])
+  assert.throws(() => validateData({ ...multi, events: [...quotes, invalid] }));
+const noRates = createExportSnapshot({ ...data, events: [] }).events.at(-1);
+assert.deepEqual(noRates.currencyValues, { BRL: 0 });
+assert.deepEqual(noRates.currencyRates, { BRL: 1 });
 console.log(
   "Currency/category checks passed: conversions, missing FX, native prices, category totals, rendering, preference persistence and backup compatibility.",
 );

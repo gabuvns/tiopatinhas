@@ -1,27 +1,103 @@
-import { formatMoney, type Currency } from "./domain";
+import {
+  activeEvents,
+  displayCurrencies,
+  formatMoney,
+  today,
+  type CurrencyRates,
+  type DisplayCurrency,
+  type LedgerEvent,
+  type WealthSnapshotEvent,
+} from "./domain";
+
+export const currencyLabels: Record<DisplayCurrency, string> = {
+  BRL: "Real brasileiro",
+  USD: "Dólar americano",
+  EUR: "Euro",
+  GBP: "Libra esterlina",
+  CHF: "Franco suíço",
+};
+
+/** Only references known by the requested date; never backfill history with future rates. */
+export function exchangeRates(
+  events: LedgerEvent[],
+  asOf = today(),
+): CurrencyRates {
+  const rates: CurrencyRates = { BRL: 1 };
+  for (const event of activeEvents(events)
+    .filter((e) => e.date <= asOf)
+    .sort(
+      (a, b) =>
+        a.date.localeCompare(b.date) || a.createdAt.localeCompare(b.createdAt),
+    )) {
+    if (event.type === "quote" && event.currency === "BRL" && event.price > 0) {
+      for (const currency of displayCurrencies.filter((c) => c !== "BRL"))
+        if (event.assetId === `FX:${currency}/BRL`)
+          rates[currency] = event.price;
+    }
+  }
+  return rates;
+}
+
+export function snapshotRate(
+  point: WealthSnapshotEvent,
+  currency: DisplayCurrency,
+) {
+  return currency === "BRL"
+    ? 1
+    : (point.currencyRates?.[currency] ??
+        (currency === "USD" ? point.fxRate : undefined));
+}
+
+export function snapshotValue(
+  point: WealthSnapshotEvent,
+  currency: DisplayCurrency,
+) {
+  if (currency === "BRL") return point.totalValue;
+  const saved =
+    point.currencyValues?.[currency] ??
+    (currency === "USD" ? point.usdValue : undefined);
+  const rate = snapshotRate(point, currency);
+  return saved ?? (rate ? point.totalValue / rate : undefined);
+}
 
 export function convertCurrency(
   value: number,
-  source: Currency,
-  target: Currency,
+  source: DisplayCurrency,
+  target: DisplayCurrency,
   usdBrl: number,
+  rates: CurrencyRates = {},
 ): number | null {
   if (!Number.isFinite(value)) return null;
   if (source === target) return value;
-  if (!Number.isFinite(usdBrl) || usdBrl <= 0) return null;
-  return source === "BRL" ? value / usdBrl : value * usdBrl;
+  const references: CurrencyRates = { ...rates, USD: usdBrl, BRL: 1 };
+  const from = references[source],
+    to = references[target];
+  if (
+    !from ||
+    !to ||
+    !Number.isFinite(from) ||
+    !Number.isFinite(to) ||
+    from <= 0 ||
+    to <= 0
+  )
+    return null;
+  return (value * from) / to;
 }
 
-/** Display conversion only. Ledger amounts, snapshots and calculations remain in BRL. */
-export function moneyDisplay(currency: Currency, usdBrl: number) {
-  const convert = (value: number, source: Currency = "BRL") =>
-    convertCurrency(value, source, currency, usdBrl);
+/** Conversion for display; ledger amounts and calculation base remain BRL. */
+export function moneyDisplay(
+  currency: DisplayCurrency,
+  usdBrl: number,
+  rates: CurrencyRates = {},
+) {
+  const convert = (value: number, source: DisplayCurrency = "BRL") =>
+    convertCurrency(value, source, currency, usdBrl, rates);
   return {
     currency,
-    symbol: currency === "USD" ? "US$" : "R$",
+    symbol: { BRL: "R$", USD: "US$", EUR: "€", GBP: "£", CHF: "CHF" }[currency],
     usdBrl,
     convert,
-    formatMoney(value: number, source: Currency = "BRL"): string {
+    formatMoney(value: number, source: DisplayCurrency = "BRL"): string {
       const amount = convert(value, source);
       return amount === null ? "Sem câmbio" : formatMoney(amount, currency);
     },

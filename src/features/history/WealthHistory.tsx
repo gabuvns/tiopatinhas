@@ -2,9 +2,11 @@ import { useState } from "react";
 import {
   formatDate,
   wealthHistory,
+  type DisplayCurrency,
   type LedgerEvent,
 } from "../../domain/domain";
 import { historySeries, historyViews } from "../../domain/history";
+import { snapshotRate, snapshotValue } from "../../domain/money";
 import { useDisplayCurrency } from "../../shared/DisplayCurrency";
 import TimeSeriesChart from "../../shared/charts/TimeSeriesChart";
 export default function WealthHistory({ events }: { events: LedgerEvent[] }) {
@@ -41,7 +43,7 @@ export default function WealthHistory({ events }: { events: LedgerEvent[] }) {
     );
     setTo("");
   }
-  const money = (value: number, unit: "BRL" | "USD") =>
+  const money = (value: number, unit: DisplayCurrency) =>
     new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: unit,
@@ -166,11 +168,12 @@ export default function WealthHistory({ events }: { events: LedgerEvent[] }) {
         </div>
       )}
       <p className="wealth-history-note">
-        Cada painel usa sua própria escala. USD do patrimônio preserva o câmbio
-        do snapshot. Aportes em USD usam o câmbio registrado na operação ou
-        disponível até sua data; sem ele, o mês fica indisponível. Vendas não
-        reduzem o total de compras e aportes. Registros consolidados e operações
-        precisam representar lançamentos distintos para evitar dupla contagem.
+        Cada painel usa sua própria escala. O patrimônio em outras moedas
+        preserva o câmbio do snapshot. Aportes convertidos usam o câmbio
+        registrado na operação ou disponível até sua data; sem ele, o mês fica
+        indisponível. Vendas não reduzem o total de compras e aportes. Registros
+        consolidados e operações precisam representar lançamentos distintos para
+        evitar dupla contagem.
       </p>
       <details>
         <summary>
@@ -182,8 +185,8 @@ export default function WealthHistory({ events }: { events: LedgerEvent[] }) {
               <tr>
                 <th>Referência</th>
                 <th>BRL</th>
-                <th>USD histórico</th>
-                <th>Câmbio</th>
+                <th>{currency === "BRL" ? "USD" : currency} histórico</th>
+                <th>BRL por 1 {currency === "BRL" ? "USD" : currency}</th>
                 <th>Origem</th>
               </tr>
             </thead>
@@ -197,11 +200,25 @@ export default function WealthHistory({ events }: { events: LedgerEvent[] }) {
                   </td>
                   <td>{money(point.totalValue, "BRL")}</td>
                   <td>
-                    {point.usdValue === undefined
+                    {snapshotValue(
+                      point,
+                      currency === "BRL" ? "USD" : currency,
+                    ) === undefined
                       ? "Não registrado"
-                      : money(point.usdValue, "USD")}
+                      : money(
+                          snapshotValue(
+                            point,
+                            currency === "BRL" ? "USD" : currency,
+                          )!,
+                          currency === "BRL" ? "USD" : currency,
+                        )}
                   </td>
-                  <td>{point.fxRate ?? "—"}</td>
+                  <td>
+                    {snapshotRate(
+                      point,
+                      currency === "BRL" ? "USD" : currency,
+                    ) ?? "—"}
+                  </td>
                   <td>
                     {point.provenance
                       ? point.provenance.sheet + "!" + point.provenance.range

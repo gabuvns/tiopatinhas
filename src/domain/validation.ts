@@ -1,4 +1,4 @@
-import { activeEvents, type LedgerEvent } from "./domain";
+import { activeEvents, displayCurrencies, type LedgerEvent } from "./domain";
 
 const positive = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value) && value > 0;
@@ -6,6 +6,44 @@ const nonnegative = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value) && value >= 0;
 const text = (value: unknown): value is string =>
   typeof value === "string" && value.trim().length > 0;
+function validSnapshotCurrencies(e: Record<string, unknown>): boolean {
+  if (e.currencyValues === undefined && e.currencyRates === undefined)
+    return true;
+  const values = e.currencyValues,
+    rates = e.currencyRates;
+  if (
+    !values ||
+    !rates ||
+    typeof values !== "object" ||
+    typeof rates !== "object" ||
+    Array.isArray(values) ||
+    Array.isArray(rates)
+  )
+    return false;
+  const v = values as Record<string, unknown>,
+    r = rates as Record<string, unknown>;
+  if (
+    r.BRL !== 1 ||
+    v.BRL !== e.totalValue ||
+    Object.keys(v).length !== Object.keys(r).length
+  )
+    return false;
+  for (const key of Object.keys(r)) {
+    if (
+      !displayCurrencies.includes(key as (typeof displayCurrencies)[number]) ||
+      !positive(r[key]) ||
+      !nonnegative(v[key]) ||
+      Math.abs(Number(v[key]) * Number(r[key]) - Number(e.totalValue)) >= 0.01
+    )
+      return false;
+  }
+  return (
+    (e.fxRate === undefined || r.USD === e.fxRate) &&
+    (e.usdValue === undefined ||
+      (nonnegative(v.USD) &&
+        Math.abs(Number(v.USD) - Number(e.usdValue)) < 0.01))
+  );
+}
 const liquidClasses = [
   "Ações",
   "FIIs",
@@ -108,6 +146,7 @@ export function validateEvents(values: unknown[]): LedgerEvent[] {
       case "wealth_snapshot":
         valid =
           nonnegative(e.totalValue) &&
+          validSnapshotCurrencies(e) &&
           (e.usdValue === undefined || nonnegative(e.usdValue)) &&
           (e.fxRate === undefined || positive(e.fxRate)) &&
           (e.usdValue === undefined ||
@@ -143,6 +182,7 @@ export function validateEvents(values: unknown[]): LedgerEvent[] {
           positive(e.price) &&
           ["BRL", "USD"].includes(String(e.currency)) &&
           text(e.source) &&
+          (!String(e.assetId).startsWith("FX:") || e.currency === "BRL") &&
           text(e.fetchedAt) &&
           Number.isFinite(Date.parse(e.fetchedAt));
         break;

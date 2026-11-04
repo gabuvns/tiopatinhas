@@ -54,6 +54,7 @@ import {
   today,
   type AssetClass,
   type Currency,
+  type DisplayCurrency,
   type Geography,
   type IlliquidClass,
   type LedgerEvent,
@@ -91,7 +92,7 @@ import {
   DisplayCurrencyContext,
   useDisplayCurrency,
 } from "../shared/DisplayCurrency";
-import { moneyDisplay } from "../domain/money";
+import { exchangeRates, moneyDisplay, snapshotValue } from "../domain/money";
 import {
   LiquidAssetGroups,
   IlliquidAssetGroups,
@@ -272,10 +273,11 @@ function App() {
     [data.events],
   );
   const fxRate = useMemo(() => getFxRate(data.events), [data.events]);
+  const rates = useMemo(() => exchangeRates(data.events), [data.events]);
   const displayCurrency = data.settings.displayCurrency ?? "BRL";
   const display = useMemo(
-    () => moneyDisplay(displayCurrency, fxRate),
-    [displayCurrency, fxRate],
+    () => moneyDisplay(displayCurrency, fxRate, rates),
+    [displayCurrency, fxRate, rates],
   );
   const formatMoney = display.formatMoney;
   const baseline = useMemo(() => savingsBaseline(data.events), [data.events]);
@@ -597,6 +599,10 @@ function App() {
       const assetId = selectedAssetId === "manual" ? ticker : selectedAssetId;
       if (!assetId || price <= 0)
         return notify("Informe o ativo e um preço válido.");
+      if (assetId.startsWith("FX:") && form.get("currency") !== "BRL")
+        return notify(
+          "Informe o câmbio em reais (BRL) por 1 unidade da moeda estrangeira.",
+        );
       addEvent(
         makeEvent({
           type: "quote",
@@ -650,32 +656,42 @@ function App() {
     const active = activeEvents(data.events);
     const holdings = buildPortfolio(active, fxRate).positions;
     const stamp = new Date().toISOString();
-    try {
-      const response = await fetch(
-        "https://api.frankfurter.dev/v2/rate/usd/brl",
-      );
-      if (response.ok) {
-        const rateData = (await response.json()) as {
-          date: string;
-          rate: number;
-        };
-        if (rateData.rate > 0)
-          latest.push(
-            makeEvent({
-              type: "quote",
-              date: rateData.date,
-              assetId: "FX:USD/BRL",
-              ticker: "USD/BRL",
-              price: rateData.rate,
-              currency: "BRL",
-              source: "Frankfurter · referência diária",
-              fetchedAt: stamp,
-            }),
+    await Promise.all(
+      (["USD", "EUR", "GBP", "CHF"] as const).map(async (currency) => {
+        try {
+          const response = await fetch(
+            `https://api.frankfurter.dev/v2/rate/${currency.toLowerCase()}/brl`,
+            { signal: AbortSignal.timeout(12000) },
           );
-      }
-    } catch {
-      /* existing/manual FX stays in place */
-    }
+          if (response.ok) {
+            const rateData = (await response.json()) as {
+              date: string;
+              rate: number;
+            };
+            if (
+              Number.isFinite(rateData.rate) &&
+              rateData.rate > 0 &&
+              /^\d{4}-\d{2}-\d{2}$/.test(rateData.date) &&
+              rateData.date <= today()
+            )
+              latest.push(
+                makeEvent({
+                  type: "quote",
+                  date: rateData.date,
+                  assetId: `FX:${currency}/BRL`,
+                  ticker: `${currency}/BRL`,
+                  price: rateData.rate,
+                  currency: "BRL",
+                  source: "Frankfurter · referência diária",
+                  fetchedAt: stamp,
+                }),
+              );
+          }
+        } catch {
+          /* existing/manual FX stays in place */
+        }
+      }),
+    );
 
     await Promise.all(
       holdings
@@ -688,6 +704,7 @@ function App() {
                 : `${position.ticker}USDT`;
               const response = await fetch(
                 `https://data-api.binance.vision/api/v3/ticker/price?symbol=${encodeURIComponent(symbol)}`,
+                { signal: AbortSignal.timeout(12000) },
               );
               if (!response.ok) return;
               const body = (await response.json()) as { price?: string };
@@ -711,6 +728,7 @@ function App() {
             ) {
               const response = await fetch(
                 `https://brapi.dev/api/v2/stocks/quote?symbols=${encodeURIComponent(position.ticker)}`,
+                { signal: AbortSignal.timeout(12000) },
               );
               if (!response.ok) return;
               const body = (await response.json()) as {
@@ -973,6 +991,7 @@ function App() {
               <CurrencySwitch
                 currency={displayCurrency}
                 usdBrl={fxRate}
+                rates={rates}
                 onChange={(currency) =>
                   setData((current) => ({
                     ...current,
@@ -1146,12 +1165,18 @@ function App() {
             </span>
             <span>
               Valores em {displayCurrency}{" "}
-              {fxRate > 0 ? (
+              {(rates[displayCurrency === "BRL" ? "USD" : displayCurrency] ??
+                0) > 0 ? (
                 <>
-                  <span className="footer-separator">·</span> US$ 1 ={" "}
-                  {formatFx(fxRate)}
-                  {displayCurrency === "USD"
-                    ? " · conversão pelo câmbio de referência atual"
+                  <span className="footer-separator">·</span> 1{" "}
+                  {displayCurrency === "BRL" ? "USD" : displayCurrency} ={" "}
+                  {formatFx(
+                    rates[
+                      displayCurrency === "BRL" ? "USD" : displayCurrency
+                    ] ?? 0,
+                  )}
+                  {displayCurrency !== "BRL"
+                    ? " · conversão pelas referências salvas"
                     : ""}
                 </>
               ) : (
@@ -1402,8 +1427,12 @@ function ActivityRow({
   event: LedgerEvent;
   onReverse?: (id: string) => void;
 }) {
-  const { formatMoney } = useDisplayCurrency();
-  const { label, detail, amount, type } = eventDescription(event, formatMoney);
+  const { formatMoney, currency } = useDisplayCurrency();
+  const { label, detail, amount, type } = eventDescription(
+    event,
+    formatMoney,
+    currency,
+  );
   return (
     <div className="activity-row">
       <div className={`activity-type ${type}`}>
@@ -1442,7 +1471,8 @@ function ActivityRow({
 
 function eventDescription(
   event: LedgerEvent,
-  formatMoney: (value: number, currency?: Currency) => string,
+  formatMoney: (value: number, currency?: DisplayCurrency) => string,
+  currency: DisplayCurrency,
 ): {
   label: string;
   detail: string;
@@ -1463,13 +1493,24 @@ function eventDescription(
       amount: formatMoney(event.amount),
       type: "other",
     };
-  if (event.type === "wealth_snapshot")
+  if (event.type === "wealth_snapshot") {
+    const savedValue = snapshotValue(event, currency);
     return {
-      label: "Patrimônio histórico",
-      detail: "Valor declarado na planilha; não altera o patrimônio atual",
-      amount: formatMoney(event.totalValue),
+      label:
+        event.origin === "export"
+          ? "Snapshot da exportação"
+          : "Patrimônio histórico",
+      detail:
+        event.origin === "export"
+          ? "Valores e câmbios preservados na exportação"
+          : "Observação histórica; não altera o patrimônio atual",
+      amount:
+        savedValue === undefined
+          ? "Não registrado"
+          : formatMoney(savedValue, currency),
       type: "other",
     };
+  }
   if (event.type === "income")
     return {
       label: event.category,
@@ -1518,14 +1559,12 @@ function eventDescription(
   if (event.type === "quote")
     return {
       label: `Cotação · ${event.ticker}`,
-      detail:
-        event.assetId === "FX:USD/BRL"
-          ? event.source + " · US$ 1 em BRL"
-          : event.source,
-      amount:
-        event.assetId === "FX:USD/BRL"
-          ? formatFx(event.price)
-          : formatMoney(event.price, event.currency),
+      detail: event.assetId.startsWith("FX:")
+        ? event.source + " · 1 " + event.ticker.split("/")[0] + " em BRL"
+        : event.source,
+      amount: event.assetId.startsWith("FX:")
+        ? formatFx(event.price)
+        : formatMoney(event.price, event.currency),
       type: "other",
     };
   if (event.type === "target")
@@ -2763,7 +2802,10 @@ function EntryFields({
                 const tickerField = document.getElementById(
                   "quote-ticker",
                 ) as HTMLInputElement | null;
-                if (tickerField) tickerField.value = event.target.value;
+                if (tickerField)
+                  tickerField.value = event.target.value.replace(/^FX:/, "");
+                if (event.target.value.startsWith("FX:"))
+                  setQuoteCurrency("BRL");
               }}
             >
               {portfolio.positions.map((position) => (
@@ -2772,6 +2814,9 @@ function EntryFields({
                 </option>
               ))}
               <option value="FX:USD/BRL">USD/BRL</option>
+              <option value="FX:EUR/BRL">EUR/BRL</option>
+              <option value="FX:GBP/BRL">GBP/BRL</option>
+              <option value="FX:CHF/BRL">CHF/BRL</option>
               <option value="manual">Outro (ticker abaixo)</option>
             </select>
           </label>
@@ -2923,18 +2968,7 @@ function ConfirmDialog({
   );
 }
 function getFxRate(events: LedgerEvent[]): number {
-  const quote = activeEvents(events)
-    .filter(
-      (event) =>
-        event.type === "quote" &&
-        event.assetId === "FX:USD/BRL" &&
-        event.date <= today(),
-    )
-    .sort(
-      (a, b) =>
-        b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt),
-    )[0];
-  return quote?.type === "quote" ? quote.price : 0;
+  return exchangeRates(events).USD ?? 0;
 }
 
 interface OverviewProps {

@@ -18,9 +18,13 @@ Plataforma pessoal de gestão de dinheiro, executada no navegador sem servidor p
 
 Histórico imutável: correções adicionam estornos, nunca reescrevem eventos. Compras e vendas consolidam quantidade e preço médio; posições iniciais podem ter custo desconhecido. Fluxo de caixa considera recebimentos e despesas, cartão no mês de pagamento. Aportes não são subtraídos novamente da poupança. Metas e cofrinhos são configurações versionadas no backup. Cofrinhos são destinações de valores em ativos existentes, não ativos extras. Não executar transações reais.
 
-## Snapshots e USD
+## Moedas de exibição e snapshots
 
 Cada exportação salva um evento wealth_snapshot antes do download, com total BRL, parcelas líquida/ilíquida, composição por categoria e, quando há taxa válida, usdValue e fxRate. Valores em USD históricos são os capturados na data, nunca recalculados por câmbio futuro. Ausência de USD em registros legados permanece ausência explícita. Snapshot não aumenta patrimônio atual. A projeção usa taxa mensal equivalente e aportes no fim do mês.
+
+settings.displayCurrency aceita BRL, USD, EUR, GBP ou CHF. DisplayCurrency é separado de Currency: operações e preços nativos continuam em BRL ou USD. O seletor altera a apresentação, sem alterar saldos, custos ou quantidades. Frankfurter fornece referências diárias por par /v2/rate/{moeda}/brl, sem chave; falhas preservam as referências salvas. Entrada manual na carteira aceita os quatro pares estrangeiros. Eventos quote usam assetId FX:EUR/BRL (ou USD, GBP, CHF), currency BRL e price em reais por uma unidade estrangeira; data, fonte e fetchedAt ficam no histórico.
+
+Novos snapshots incluem currencyRates e currencyValues, objetos com chaves BRL/USD/EUR/GBP/CHF. BRL tem taxa 1 e valor totalValue. Cada moeda estrangeira só aparece quando existe cotação válida até a data do snapshot: currencyValues[moeda] = totalValue / currencyRates[moeda]. Todas as referências disponíveis são capturadas, independentemente da moeda selecionada; o JSON também preserva settings.displayCurrency. As referências podem ser de dias anteriores, conforme eventos de cotação, e não são preços intraday. Sem cotação, a chave é omitida e a interface informa indisponibilidade. Campos usdValue/fxRate permanecem para compatibilidade. A importação rejeita mapas incompletos, taxas inválidas, moedas desconhecidas ou valores inconsistentes. Não preencher mapas retroativamente; gráficos usam somente referências do próprio snapshot, e aportes usam referências registradas até a data do lançamento.
 
 ## Persistência e recuperação
 
