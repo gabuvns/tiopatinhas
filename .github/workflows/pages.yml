@@ -14,6 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Reject private data files
+        run: |
+          blocked="$(git ls-files '*.json' '*.json5' '*.jsonl' '*.xlsx' '*.xls' '*.csv' '*.tsv')"
+          if [ -n "$blocked" ]; then
+            echo "JSON and spreadsheet files must not be versioned."
+            exit 1
+          fi
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
