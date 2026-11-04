@@ -138,8 +138,7 @@ body {
     .forecast-baseline,
     .asset-category > summary,
     .reserve-option,
-    .pie-legend-row,
-    .activity-row:hover
+    .pie-legend-row
   ) {
   background: #f4f7f3;
   border-color: #d6e0d7;

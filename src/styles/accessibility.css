@@ -273,6 +273,12 @@ body {
 :root[data-theme] .app-shell .nav-item {
   color: #d2e0e7;
 }
+/* Hover and keyboard focus use the same theme surface as the text tokens.
+   Keep the legacy light palette out of activity rows in dark mode. */
+:root[data-theme] .app-shell .activity-row:is(:hover, :focus-within) {
+  background: var(--subtle);
+  color: var(--text);
+}
 :root[data-theme] .app-shell .nav-item.active {
   background: #36504c;
   color: #fff4d3;
