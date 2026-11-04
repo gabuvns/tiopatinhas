@@ -244,6 +244,14 @@ body {
   border-top: 1px solid #ccd9c9;
   padding-top: 20px;
 }
+:root .app-shell .pocket-warning {
+  color: #855516;
+  background: #fff3d8;
+  border: 1px solid #e1ca91;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+}
 .pocket-options {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

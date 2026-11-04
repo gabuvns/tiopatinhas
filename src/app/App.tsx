@@ -70,7 +70,8 @@ import {
   validateData,
   type AppData,
 } from "../infrastructure/store";
-import Pockets, { defaultPockets } from "../features/pockets/Pockets";
+import Pockets from "../features/pockets/Pockets";
+import { createDefaultPockets } from "../domain/pockets";
 import { demoData } from "../features/demo/demo";
 import ImportGuide from "../features/import/ImportGuide";
 import WealthHistory from "../features/history/WealthHistory";
@@ -279,6 +280,8 @@ function App() {
 
   useEffect(() => {
     let mounted = true;
+    // Fast Refresh can retain React's demo state while reloading the storage module.
+    setStorageScope(demo);
     loadData()
       .then((loaded) => {
         if (mounted) {
@@ -286,7 +289,7 @@ function App() {
             ...loaded,
             settings: {
               ...loaded.settings,
-              pockets: loaded.settings.pockets ?? defaultPockets,
+              pockets: loaded.settings.pockets ?? createDefaultPockets(),
             },
           });
           if (loaded.importInfo) {
@@ -320,8 +323,10 @@ function App() {
 
   useEffect(() => {
     if (ready && storageHealthy)
-      saveData(data).catch(() => notify("Falha ao salvar no navegador."));
-  }, [data, ready, storageHealthy]);
+      saveData(data, demo ? "-demo" : "").catch(() =>
+        notify("Falha ao salvar no navegador."),
+      );
+  }, [data, ready, storageHealthy, demo]);
 
   useEffect(() => {
     if (!ready || !storageHealthy) return;
@@ -371,8 +376,17 @@ function App() {
   }
 
   function setReserve(position: Position, selected: boolean) {
-    if (selected && data.settings.pockets?.some((p) => p.allocations.some((a) => a.assetId === position.assetId && a.amount > 0))) {
-      notify("Remova a destinação deste ativo dos cofrinhos antes de incluí-lo na reserva.");
+    if (
+      selected &&
+      data.settings.pockets?.some((p) =>
+        p.allocations.some(
+          (a) => a.assetId === position.assetId && a.amount > 0,
+        ),
+      )
+    ) {
+      notify(
+        "Remova a destinação deste ativo dos cofrinhos antes de incluí-lo na reserva.",
+      );
       return;
     }
     if (
@@ -756,6 +770,7 @@ function App() {
   }
 
   async function handleExport() {
+    if (demoLock.current) return;
     if (!storageHealthy) {
       notify("Restaure um backup válido antes de exportar.");
       return;
@@ -764,7 +779,7 @@ function App() {
     exportLock.current = true;
     setExportBusy(true);
     try {
-      const exported = await exportBackup(data);
+      const exported = await exportBackup(data, demo ? "-demo" : "");
       const snapshot = exported.events[exported.events.length - 1];
       setData((current) => ({
         ...current,
@@ -788,11 +803,12 @@ function App() {
   }
 
   async function restoreImport() {
-    if (!importPreview || importBusy || exportLock.current) return;
+    if (!importPreview || importBusy || exportLock.current || demoLock.current)
+      return;
     setImportBusy(true);
     dataGeneration.current += 1;
     try {
-      const restored = await restoreBackup(importPreview);
+      const restored = await restoreBackup(importPreview, demo ? "-demo" : "");
       setStorageHealthy(true);
       setData(restored);
       const lastMonth = activeEvents(restored.events)
@@ -946,7 +962,7 @@ function App() {
                   if (demoLock.current) return;
                   demoLock.current = true;
                   try {
-                    await saveData(data);
+                    await saveData(data, demo ? "-demo" : "");
                     dataGeneration.current++;
                     setStorageScope(!demo);
                     const next = demo ? await loadData() : demoData();
@@ -1057,7 +1073,18 @@ function App() {
                 quoteBusy={quoteBusy}
                 onReserve={setReserve}
                 averageExpenses={baseline.averageExpenses}
-                pocketsPanel={<Pockets positions={portfolio.positions} pockets={data.settings.pockets} onChange={(pockets: Pocket[]) => setData((c) => ({ ...c, settings: { ...c.settings, pockets } }))} />}
+                pocketsPanel={
+                  <Pockets
+                    positions={portfolio.positions}
+                    pockets={data.settings.pockets}
+                    onChange={(pockets: Pocket[]) =>
+                      setData((c) => ({
+                        ...c,
+                        settings: { ...c.settings, pockets },
+                      }))
+                    }
+                  />
+                }
               />
             )}
             {view === "rebalance" && (

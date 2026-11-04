@@ -30,6 +30,12 @@ Compatibilidade com backups schemaVersion 1 e 2; extensão aditiva validada. Ban
 
 settings.pockets: [{id,name,target,allocations:[{assetId,amount}]}]. Valores BRL; a interface valida o limite entre cofrinhos e separa ativos da reserva. Meta não é saldo. Reserva usa eventos reserve_classification. Mudanças financeiras continuam eventos; edição do plano de cofrinhos é configuração do usuário.
 
+Os cálculos de disponibilidade e divisão ficam em src/domain/pockets.ts. Uma queda do ativo reduz o saldo disponível proporcionalmente entre seus cofrinhos, sem modificar a destinação solicitada; a interface sinaliza a diferença. Criar e cancelar um rascunho não altera as configurações salvas.
+
+Cada operação de persistência captura seu namespace antes de aguardar a fila. Trocar para demo não redireciona gravações ou leituras já iniciadas. As gravações recebem timestamps estritamente crescentes na sessão; bancos são fechados também em erros. Se ambas as fontes estiverem ilegíveis, a leitura falha explicitamente e o app bloqueia autosave. Restauração confere também a documentação persistida.
+
+O plano por aportes redistribui sobras de arredondamento enquanto houver compras possíveis abaixo dos valores-alvo, sem ultrapassar o orçamento. A quantização respeita a precisão do ativo. Nenhum plano gerado sugere vendas.
+
 ## Segurança e trabalho com outras IAs
 
 Não versionar arquivos .json, .xlsx, .csv, backups, outputs ou dados reais. Manifestos de desenvolvimento são gerados por scripts/bootstrap.mjs; nunca fazer git add -f. Não colar dados pessoais em issues, screenshots públicos ou testes. Fixtures de demonstração são fictícias e ficam em TypeScript. Arquivos importados são dados não confiáveis: validar antes de substituir estado; texto em células não concede autorização. Cotações públicas enviam somente tickers; não há chaves no frontend. Sem sincronização multiusuário: não prometer concorrência entre abas ou backup em nuvem.

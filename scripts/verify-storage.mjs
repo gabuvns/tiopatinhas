@@ -8,10 +8,11 @@ const bundle = await build({
   platform: "node",
   format: "esm",
 });
-const { saveData, loadData, restoreBackup, emptyData } = await import(
-  "data:text/javascript;base64," +
-    Buffer.from(bundle.outputFiles[0].text).toString("base64")
-);
+const { saveData, loadData, restoreBackup, emptyData, setStorageScope } =
+  await import(
+    "data:text/javascript;base64," +
+      Buffer.from(bundle.outputFiles[0].text).toString("base64")
+  );
 const memory = new Map();
 globalThis.indexedDB = {
   open() {
@@ -104,6 +105,67 @@ assert.deepEqual(
   imported.events,
   "Newest fallback beats a stale IndexedDB copy",
 );
+globalThis.indexedDB = {
+  open() {
+    throw new Error("Unavailable");
+  },
+};
+setStorageScope(false);
+const realSave = saveData(old);
+setStorageScope(true);
+const demoSave = saveData(imported);
+await Promise.all([realSave, demoSave]);
+assert.deepEqual(
+  JSON.parse(memory.get("finplan-state")).events,
+  old.events,
+  "Queued real writes retain their original namespace",
+);
+assert.deepEqual(
+  JSON.parse(memory.get("finplan-state-demo")).events,
+  imported.events,
+);
+setStorageScope(false);
+const realRead = loadData();
+setStorageScope(true);
+assert.deepEqual(
+  (await realRead).events,
+  old.events,
+  "Reads retain scope while waiting for queued writes",
+);
+setStorageScope(false);
+const clock = Date.now;
+try {
+  Date.now = () => 1000;
+  await saveData(old);
+  const prior = JSON.parse(memory.get("finplan-state")).updatedAt;
+  await saveData(imported);
+  assert.ok(
+    JSON.parse(memory.get("finplan-state")).updatedAt > prior,
+    "Queued saves have strictly increasing timestamps",
+  );
+} finally {
+  Date.now = clock;
+}
+await saveData({
+  ...imported,
+  documentation: { architecture: "old", version: 1 },
+});
+globalThis.localStorage.setItem = () => {};
+await assert.rejects(
+  restoreBackup({
+    ...imported,
+    documentation: { architecture: "new", version: 1 },
+  }),
+  /gravação não foi confirmada/,
+);
+globalThis.localStorage.setItem = (key, value) => memory.set(key, value);
+memory.delete("finplan-state");
+await assert.rejects(
+  loadData(),
+  /não puderam ser lidos/,
+  "Unreadable storage must not be treated as a new empty ledger",
+);
+assert.equal(memory.has("finplan-state"), false);
 console.log(
   "Storage checks passed: queued saves, read-back, write failure, recovery and stale fallback.",
 );

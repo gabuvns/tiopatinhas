@@ -1,15 +1,15 @@
 import { useState, type FormEvent } from "react";
-import type { Pocket } from "../../infrastructure/store";
+import {
+  availableForPocket,
+  createDefaultPockets,
+  pocketBalances,
+  validatePocket,
+  type Pocket,
+} from "../../domain/pockets";
 import type { Position } from "../../domain/domain";
+import { formatMoney as formatBaseMoney } from "../../domain/domain";
 import { useDisplayCurrency } from "../../shared/DisplayCurrency";
-export const defaultPockets: Pocket[] = [
-  {
-    id: "fun-spending",
-    name: "Banco do Tio Patinhas",
-    target: 5000,
-    allocations: [],
-  },
-];
+const defaultPockets = createDefaultPockets();
 export default function Pockets({
   positions,
   pockets = defaultPockets,
@@ -22,7 +22,9 @@ export default function Pockets({
   const { formatMoney } = useDisplayCurrency();
   const [editing, setEditing] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const current = pockets.find((p) => p.id === editing);
+  const [draft, setDraft] = useState<Pocket | null>(null);
+  const current = draft ?? pockets.find((p) => p.id === editing);
+  const balances = pocketBalances(pockets, positions);
   function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!current) return;
@@ -34,20 +36,6 @@ export default function Pockets({
         amount: Number(f.get(p.assetId) ?? 0),
       }))
       .filter((a) => a.amount > 0);
-    for (const a of allocations) {
-      const asset = positions.find((p) => p.assetId === a.assetId)!;
-      const other = pockets
-        .filter((p) => p.id !== current?.id)
-        .flatMap((p) => p.allocations)
-        .filter((v) => v.assetId === a.assetId)
-        .reduce((s, v) => s + v.amount, 0);
-      if (a.amount + other > asset.value + 0.005) {
-        setError(
-          "A divisão de " + asset.ticker + " ultrapassa o valor disponível.",
-        );
-        return;
-      }
-    }
     const next = {
       ...current,
       name: String(f.get("name")).trim(),
@@ -58,8 +46,19 @@ export default function Pockets({
       setError("Revise o nome e a meta.");
       return;
     }
-    onChange(pockets.map((p) => (p.id === next.id ? next : p)));
+    try {
+      validatePocket(next, pockets, positions);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Revise o cofrinho.");
+      return;
+    }
+    onChange(
+      pockets.some((p) => p.id === next.id)
+        ? pockets.map((p) => (p.id === next.id ? next : p))
+        : [...pockets, next],
+    );
     setEditing(null);
+    setDraft(null);
     setError("");
   }
   return (
@@ -81,8 +80,9 @@ export default function Pockets({
               target: 1000,
               allocations: [],
             };
-            onChange([...pockets, p]);
-            setEditing(p.id);
+            setDraft(p);
+            setEditing(null);
+            setError("");
           }}
         >
           Criar cofrinho
@@ -90,26 +90,8 @@ export default function Pockets({
       </div>
       <div className="goal-grid">
         {pockets.map((p) => {
-          const total = p.allocations.reduce(
-            (s, a) =>
-              s +
-              (a.amount /
-                Math.max(
-                  Number.EPSILON,
-                  pockets
-                    .flatMap((v) => v.allocations)
-                    .filter((v) => v.assetId === a.assetId)
-                    .reduce((s, v) => s + v.amount, 0),
-                )) *
-                Math.min(
-                  pockets
-                    .flatMap((v) => v.allocations)
-                    .filter((v) => v.assetId === a.assetId)
-                    .reduce((s, v) => s + v.amount, 0),
-                  positions.find((v) => v.assetId === a.assetId && !v.isEmergencyReserve)?.value ?? 0,
-                ),
-            0,
-          );
+          const balance = balances.find((item) => item.id === p.id)!;
+          const total = balance.total;
           return (
             <article className="goal-item" key={p.id}>
               <strong>{p.name}</strong>
@@ -119,6 +101,12 @@ export default function Pockets({
                   : "Seu objetivo pessoal"}
               </small>
               <strong className="goal-amount">{formatMoney(total)}</strong>
+              {balance.shortfall > 0.005 && (
+                <p className="pocket-warning" role="status">
+                  O valor disponível caiu. Destinado:{" "}
+                  {formatMoney(balance.requested)}. Revise a divisão dos ativos.
+                </p>
+              )}
               <small>
                 Meta {formatMoney(p.target)} · {p.allocations.length} ativos
               </small>
@@ -135,6 +123,7 @@ export default function Pockets({
                 className="button button-outline"
                 onClick={() => {
                   setEditing(p.id);
+                  setDraft(null);
                   setError("");
                 }}
               >
@@ -159,11 +148,30 @@ export default function Pockets({
       </p>
       {current && (
         <form key={current.id} className="pocket-editor" onSubmit={save}>
-          <h3>Gerenciar cofrinho</h3>
+          <h3>{draft ? "Novo cofrinho" : "Gerenciar cofrinho"}</h3>
+          {current.allocations.some(
+            (a) =>
+              !positions.some(
+                (p) =>
+                  p.assetId === a.assetId &&
+                  !p.isEmergencyReserve &&
+                  p.value > 0,
+              ),
+          ) && (
+            <p className="pocket-warning">
+              Há destinações em ativos indisponíveis. Elas serão removidas se
+              você salvar esta revisão.
+            </p>
+          )}
           <div className="form-fields">
             <label className="field">
               <span>Nome</span>
-              <input name="name" required defaultValue={current.name} />
+              <input
+                autoFocus
+                name="name"
+                required
+                defaultValue={current.name}
+              />
             </label>
             <label className="field">
               <span>Meta em BRL</span>
@@ -194,12 +202,20 @@ export default function Pockets({
                     name={p.assetId}
                     type="number"
                     min="0"
+                    max={availableForPocket(p, pockets, current.id)}
                     step="0.01"
                     defaultValue={
                       current.allocations.find((a) => a.assetId === p.assetId)
                         ?.amount ?? 0
                     }
                   />
+                  <small>
+                    Disponível para este cofrinho em BRL:{" "}
+                    {formatBaseMoney(
+                      availableForPocket(p, pockets, current.id),
+                    )}
+                    .
+                  </small>
                 </label>
               ))}
           </div>
@@ -209,7 +225,11 @@ export default function Pockets({
             <button
               type="button"
               className="button button-outline"
-              onClick={() => setEditing(null)}
+              onClick={() => {
+                setEditing(null);
+                setDraft(null);
+                setError("");
+              }}
             >
               Cancelar
             </button>

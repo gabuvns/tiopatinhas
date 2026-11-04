@@ -7,13 +7,8 @@ import {
 } from "../domain/domain";
 import architecture from "../../docs/ARCHITECTURE.md?raw";
 import { validateEvents } from "../domain/validation";
-
-export interface Pocket {
-  id: string;
-  name: string;
-  target: number;
-  allocations: { assetId: string; amount: number }[];
-}
+import { createDefaultPockets, type Pocket } from "../domain/pockets";
+export type { Pocket } from "../domain/pockets";
 export interface AppData {
   schemaVersion: 2;
   updatedAt: string;
@@ -57,21 +52,23 @@ export const emptyData = (): AppData => ({
   settings: { currency: "BRL", milestones: [50000, 100000, 200000, 300000] },
 });
 
-function openDatabase(): Promise<IDBDatabase> {
+function openDatabase(scope: string): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME + storageScope, 1);
+    const request = indexedDB.open(DB_NAME + scope, 1);
     request.onupgradeneeded = () => request.result.createObjectStore(STORE);
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
 }
 
-export async function loadData(): Promise<AppData> {
+export async function loadData(scope = storageScope): Promise<AppData> {
   await pendingSave.catch(() => undefined);
   const candidates: AppData[] = [];
   let foundStoredData = false;
+  let readFailed = false;
+  let database: IDBDatabase | undefined;
   try {
-    const db = await openDatabase();
+    const db = (database = await openDatabase(scope));
     const value = await new Promise<AppData | undefined>((resolve, reject) => {
       const request = db
         .transaction(STORE, "readonly")
@@ -80,47 +77,51 @@ export async function loadData(): Promise<AppData> {
       request.onsuccess = () => resolve(request.result as AppData | undefined);
       request.onerror = () => reject(request.error);
     });
-    db.close();
     if (value) {
       foundStoredData = true;
       candidates.push(validateData(value));
     }
   } catch {
-    /* restricted browsers use the JSON localStorage fallback */
+    readFailed = true;
+  } finally {
+    database?.close();
   }
   try {
-    const fallback = localStorage.getItem(fallbackKey + storageScope);
+    const fallback = localStorage.getItem(fallbackKey + scope);
     if (fallback) {
       foundStoredData = true;
       candidates.push(validateData(JSON.parse(fallback)));
     }
   } catch {
-    /* use a valid IndexedDB copy when the fallback is unavailable */
+    readFailed = true;
   }
   if (candidates.length)
     return candidates.sort(
       (a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt),
     )[0];
-  if (foundStoredData)
+  if (foundStoredData || readFailed)
     throw new Error(
       "Os dados salvos não puderam ser lidos. Importe um backup válido para recuperá-los.",
     );
   return emptyData();
 }
 
-export function saveData(data: AppData): Promise<void> {
+export function saveData(data: AppData, scope = storageScope): Promise<void> {
   const snapshot = structuredClone(data);
   const operation = pendingSave
     .catch(() => undefined)
-    .then(() => writeData(snapshot));
+    .then(() => writeData(snapshot, scope));
   pendingSave = operation;
   return operation;
 }
 
-async function writeData(data: AppData): Promise<void> {
-  const next = { ...data, updatedAt: new Date().toISOString() };
+let lastWrite = 0;
+async function writeData(data: AppData, scope: string): Promise<void> {
+  lastWrite = Math.max(Date.now(), lastWrite + 1);
+  const next = { ...data, updatedAt: new Date(lastWrite).toISOString() };
+  let database: IDBDatabase | undefined;
   try {
-    const db = await openDatabase();
+    const db = (database = await openDatabase(scope));
     await new Promise<void>((resolve, reject) => {
       const transaction = db.transaction(STORE, "readwrite");
       transaction.objectStore(STORE).put(next, KEY);
@@ -128,21 +129,28 @@ async function writeData(data: AppData): Promise<void> {
       transaction.onerror = () => reject(transaction.error);
       transaction.onabort = () => reject(transaction.error);
     });
-    db.close();
   } catch {
-    localStorage.setItem(fallbackKey + storageScope, JSON.stringify(next));
+    localStorage.setItem(fallbackKey + scope, JSON.stringify(next));
+  } finally {
+    database?.close();
   }
 }
 
 /** Acknowledge restoration only after the saved data has been read back. */
-export async function restoreBackup(value: unknown): Promise<AppData> {
+export async function restoreBackup(
+  value: unknown,
+  scope = storageScope,
+): Promise<AppData> {
   const imported = validateData(value);
-  await saveData(imported);
-  const persisted = await loadData();
+  await saveData(imported, scope);
+  const persisted = await loadData(scope);
   if (
     JSON.stringify(persisted.events) !== JSON.stringify(imported.events) ||
     JSON.stringify(persisted.settings) !== JSON.stringify(imported.settings) ||
-    JSON.stringify(persisted.importInfo) !== JSON.stringify(imported.importInfo)
+    JSON.stringify(persisted.importInfo) !==
+      JSON.stringify(imported.importInfo) ||
+    JSON.stringify(persisted.documentation) !==
+      JSON.stringify(imported.documentation)
   ) {
     throw new Error(
       "A gravação não foi confirmada. O backup não foi aplicado ao painel; tente novamente.",
@@ -278,21 +286,30 @@ export function createExportSnapshot(data: AppData): AppData {
   });
   return {
     ...data,
-    settings: { ...data.settings, pockets: data.settings.pockets ?? [{ id: "fun-spending", name: "Banco do Tio Patinhas", target: 5000, allocations: [] }] },
+    settings: {
+      ...data.settings,
+      pockets: data.settings.pockets ?? createDefaultPockets(),
+    },
     documentation: { architecture, version: 1 },
     updatedAt: snapshot.createdAt,
     events: [...data.events, snapshot],
   };
 }
 
-export async function saveExportSnapshot(data: AppData): Promise<AppData> {
+export async function saveExportSnapshot(
+  data: AppData,
+  scope = storageScope,
+): Promise<AppData> {
   const exported = createExportSnapshot(data);
-  await saveData(exported);
+  await saveData(exported, scope);
   return exported;
 }
 
-export async function exportBackup(data: AppData): Promise<AppData> {
-  const exported = await saveExportSnapshot(data);
+export async function exportBackup(
+  data: AppData,
+  scope = storageScope,
+): Promise<AppData> {
+  const exported = await saveExportSnapshot(data, scope);
   downloadBackup(exported);
   return exported;
 }

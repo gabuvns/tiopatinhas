@@ -640,30 +640,56 @@ export function planContribution(
     (p) => p.rebalanceEligible !== false && !p.isEmergencyReserve,
   );
   const weight = eligible.reduce((sum, p) => sum + p.targetPercent, 0);
-  if (!(budget > 0) || !weight) return [];
+  if (!Number.isFinite(budget) || !(budget > 0) || !weight) return [];
   const total = eligible.reduce((sum, p) => sum + p.value, 0) + budget;
   const gaps = eligible.map((p) => ({
     p,
     gap: Math.max(0, (total * p.targetPercent) / weight - p.value),
   }));
   const sum = gaps.reduce((s, g) => s + g.gap, 0);
-  return gaps.flatMap(({ p, gap }) => {
+  const proposals = gaps.map(({ p, gap }) => {
     const price = p.price * (p.currency === "USD" ? fx : 1);
-    if (!gap || !(price > 0)) return [];
-    const allocated = (budget * gap) / sum,
+    const allocated = sum > 0 ? (budget * gap) / sum : 0,
       factor = 10 ** p.precision;
-    const quantity = Math.floor((allocated / price) * factor) / factor;
-    return quantity > 0
-      ? [
-          {
-            assetId: p.assetId,
-            ticker: p.ticker,
-            side: "COMPRAR" as const,
-            quantity,
-            amount: quantity * price,
-            residual: allocated - quantity * price,
-          },
-        ]
-      : [];
+    const quantity =
+      gap > 0 && Number.isFinite(price) && price > 0
+        ? Math.floor((allocated / price) * factor) / factor
+        : 0;
+    return { p, gap, price, factor, quantity, allocated };
   });
+  let remaining =
+    budget -
+    proposals.reduce(
+      (s, item) =>
+        s +
+        item.quantity *
+          (Number.isFinite(item.price) && item.price > 0 ? item.price : 0),
+      0,
+    );
+  // Use rounding leftovers while staying below each asset's target value.
+  const priority = [...proposals].sort(
+    (a, b) =>
+      b.gap - b.quantity * b.price - (a.gap - a.quantity * a.price) ||
+      a.p.assetId.localeCompare(b.p.assetId),
+  );
+  for (const item of priority) {
+    if (!Number.isFinite(item.price) || item.price <= 0) continue;
+    const quantumCost = item.price / item.factor;
+    const room = Math.max(0, item.gap - item.quantity * item.price);
+    const units = Math.floor(Math.min(remaining, room) / quantumCost);
+    if (units > 0) {
+      item.quantity += units / item.factor;
+      remaining = Math.max(0, remaining - units * quantumCost);
+    }
+  }
+  return proposals
+    .filter((item) => item.quantity > 0)
+    .map((item) => ({
+      assetId: item.p.assetId,
+      ticker: item.p.ticker,
+      side: "COMPRAR" as const,
+      quantity: item.quantity,
+      amount: item.quantity * item.price,
+      residual: Math.max(0, item.allocated - item.quantity * item.price),
+    }));
 }
