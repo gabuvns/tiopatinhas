@@ -155,7 +155,7 @@ export default function Pockets({
       <p className="muted">
         Cofrinhos separam uma finalidade dentro dos ativos existentes; seus
         valores não são somados novamente ao patrimônio. A reserva de emergência
-        é gerenciada abaixo.
+        é gerenciada separadamente.
       </p>
       {current && (
         <form key={current.id} className="pocket-editor" onSubmit={save}>

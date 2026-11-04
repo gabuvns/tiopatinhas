@@ -1020,18 +1020,6 @@ function App() {
                 para preservar os dados. Restaure um backup válido.
               </div>
             )}
-            {view === "portfolio" && (
-              <Pockets
-                positions={portfolio.positions}
-                pockets={data.settings.pockets}
-                onChange={(pockets: Pocket[]) =>
-                  setData((c) => ({
-                    ...c,
-                    settings: { ...c.settings, pockets },
-                  }))
-                }
-              />
-            )}
 
             {view === "overview" && (
               <Overview
@@ -1069,6 +1057,7 @@ function App() {
                 quoteBusy={quoteBusy}
                 onReserve={setReserve}
                 averageExpenses={baseline.averageExpenses}
+                pocketsPanel={<Pockets positions={portfolio.positions} pockets={data.settings.pockets} onChange={(pockets: Pocket[]) => setData((c) => ({ ...c, settings: { ...c.settings, pockets } }))} />}
               />
             )}
             {view === "rebalance" && (
@@ -1596,6 +1585,7 @@ function PortfolioPage({
   quoteBusy,
   onReserve,
   averageExpenses,
+  pocketsPanel,
 }: {
   portfolio: ReturnType<typeof buildPortfolio>;
   fxRate: number;
@@ -1606,6 +1596,7 @@ function PortfolioPage({
   quoteBusy: boolean;
   onReserve: (position: Position, selected: boolean) => void;
   averageExpenses: number;
+  pocketsPanel: ReactNode;
 }) {
   const { formatMoney } = useDisplayCurrency();
   const allEvents = activeEvents(events);
@@ -1694,6 +1685,7 @@ function PortfolioPage({
         monthlyExpenses={averageExpenses}
         onChange={onReserve}
       />
+      {pocketsPanel}
       <section className="panel class-allocation-panel">
         <div className="panel-heading">
           <div>
