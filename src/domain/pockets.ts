@@ -84,6 +84,11 @@ export function validatePocket(
   )
     throw new Error("Revise o nome e a meta.");
   const ids = new Set<string>();
+  if (
+    pocket.allocations.reduce((sum, item) => sum + item.amount, 0) >
+    pocket.target + 0.005
+  )
+    throw new Error("As destinações ultrapassam a meta do cofrinho.");
   for (const item of pocket.allocations) {
     const asset = assets.find((asset) => asset.assetId === item.assetId);
     if (

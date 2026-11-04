@@ -18,6 +18,7 @@ export interface AppData {
     pockets?: Pocket[];
     currency: "BRL";
     displayCurrency?: "BRL" | "USD";
+    theme?: "system" | "light" | "dark";
     milestones: number[];
   };
   importInfo?: {
@@ -169,6 +170,8 @@ export function validateData(value: unknown): AppData {
     !Array.isArray(data.events) ||
     !settings ||
     settings.currency !== "BRL" ||
+    (settings.theme !== undefined &&
+      !["system", "light", "dark"].includes(settings.theme)) ||
     (settings.displayCurrency !== undefined &&
       !["BRL", "USD"].includes(settings.displayCurrency)) ||
     !Array.isArray(settings.milestones) ||
@@ -177,7 +180,7 @@ export function validateData(value: unknown): AppData {
     )
   ) {
     throw new Error(
-      "Formato incompatível. Use um backup Finplan versão 1 ou 2.",
+      "Formato incompatível. Use um backup TioPatinhas versão 1 ou 2 (compatível com Finplan).",
     );
   }
   if (settings.pockets !== undefined) {

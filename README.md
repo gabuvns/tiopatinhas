@@ -1,10 +1,10 @@
 # TioPatinhas
 
-Aplicação web local para acompanhar fluxo de caixa, carteira e patrimônio. Não há servidor de aplicação nem conta de usuário: o histórico fica no navegador e pode ser exportado ou restaurado como JSON.
+Plataforma web para acompanhar fluxo de caixa, carteira, patrimônio e cofrinhos. O histórico fica no navegador, com exportação JSON e integração opcional com Google/Firebase para backups privados por conta.
 
 ## Executar no WSL
 
-Requer Node.js 18 ou superior.
+Requer Node.js 24.12 ou superior para as dependências atuais do Firebase.
 
 ```sh
 node scripts/bootstrap.mjs
@@ -15,6 +15,12 @@ npm run dev
 Abra o endereço local informado pelo Vite (normalmente http://localhost:5173).
 
 ## Dados e backup
+
+- O seletor de tema oferece claro, escuro e preferência do sistema; a escolha é preservada no JSON.
+- Os gráficos permitem comparar patrimônio, classes e aportes mensais lado a lado. Mouse, toque e teclado exploram os valores; filtros de datas se aplicam a todos os painéis.
+- Os sliders dos cofrinhos respeitam o valor disponível de cada ativo, as outras destinações e a meta restante.
+- O login Google e o backup por conta dependem de um projeto Firebase configurado. Consulte [docs/FIREBASE.md](docs/FIREBASE.md) e publique as regras antes de ativar o serviço. Nada é enviado automaticamente.
+- O [roteiro de conversão de XLSX](docs/CONVERSION_PROMPT.md) detalha o contrato, reconciliação e prevenção de dupla contagem.
 
 - Os eventos são salvos no IndexedDB. Navegadores com IndexedDB indisponível usam localStorage como contingência.
 - Use **Exportar** para baixar um backup JSON versionado. A importação valida o arquivo, mostra a quantidade de eventos e pede confirmação antes de substituir os dados locais.
@@ -68,6 +74,8 @@ node scripts/verify-export.mjs
 ```
 
 O teste de importação aceita o backup e os controles de origem como arquivos externos: `node scripts/verify-import.mjs backup.json controles.json`.
+
+Em desenvolvimento, abra a aplicação com `?audit=1` para executar as verificações de acessibilidade com axe-core nas telas renderizadas. O painel de diagnóstico e a biblioteca não entram no build público. Os testes incluem contraste dos tokens, mas não substituem uma auditoria WCAG completa.
 
 ## Arquitetura e privacidade
 

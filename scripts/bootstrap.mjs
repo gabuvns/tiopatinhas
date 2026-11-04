@@ -4,12 +4,14 @@ const manifest = {
   private: true,
   version: "0.2.0",
   type: "module",
+  engines: { node: ">=24.12.0" },
+  overrides: { "@grpc/grpc-js": "1.14.7" },
   scripts: {
     dev: "vite",
     build: "tsc -b && vite build",
     preview: "vite preview",
     check:
-      "node scripts/verify-planning.mjs && node scripts/verify-storage.mjs && node scripts/verify-export.mjs && node scripts/verify-currency-categories.mjs && node scripts/verify-platform.mjs",
+      "node scripts/verify-planning.mjs && node scripts/verify-storage.mjs && node scripts/verify-export.mjs && node scripts/verify-currency-categories.mjs && node scripts/verify-platform.mjs && node scripts/verify-experience.mjs",
   },
   dependencies: {
     "@vitejs/plugin-react": "4.3.4",
@@ -17,11 +19,13 @@ const manifest = {
     react: "18.3.1",
     "react-dom": "18.3.1",
     vite: "6.4.5",
+    firebase: "13.2.0",
   },
   devDependencies: {
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     typescript: "5.7.3",
+    "axe-core": "4.14.0",
   },
 };
 const typescript = {

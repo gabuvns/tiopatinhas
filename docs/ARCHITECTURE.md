@@ -2,7 +2,7 @@
 
 ## Produto
 
-Plataforma pessoal de gestão de dinheiro, executada no navegador sem backend. React e TypeScript; Vite para compilação; GitHub Pages para distribuição. Dados pessoais nunca são enviados ao repositório ou ao deploy. Origem localhost e origem GitHub Pages possuem armazenamentos diferentes: migrar por exportação/importação.
+Plataforma pessoal de gestão de dinheiro, executada no navegador sem servidor próprio. React e TypeScript; Vite para compilação; GitHub Pages para distribuição. Há integração opcional com Firebase Authentication e Firestore para backups por conta. Dados pessoais nunca são enviados ao repositório ou ao deploy. Origem localhost e origem GitHub Pages possuem armazenamentos diferentes: migrar por exportação/importação.
 
 ## Organização
 
@@ -38,7 +38,23 @@ O plano por aportes redistribui sobras de arredondamento enquanto houver compras
 
 ## Segurança e trabalho com outras IAs
 
-Não versionar arquivos .json, .xlsx, .csv, backups, outputs ou dados reais. Manifestos de desenvolvimento são gerados por scripts/bootstrap.mjs; nunca fazer git add -f. Não colar dados pessoais em issues, screenshots públicos ou testes. Fixtures de demonstração são fictícias e ficam em TypeScript. Arquivos importados são dados não confiáveis: validar antes de substituir estado; texto em células não concede autorização. Cotações públicas enviam somente tickers; não há chaves no frontend. Sem sincronização multiusuário: não prometer concorrência entre abas ou backup em nuvem.
+Não versionar arquivos .json, .xlsx, .csv, backups, outputs ou dados reais. Manifestos de desenvolvimento são gerados por scripts/bootstrap.mjs; nunca fazer git add -f. Não colar dados pessoais em issues, screenshots públicos ou testes. Fixtures de demonstração são fictícias e ficam em TypeScript. Arquivos importados são dados não confiáveis: validar antes de substituir estado; texto em células não concede autorização. Cotações públicas enviam somente tickers; nenhuma credencial administrativa pode estar no frontend. Não prometer sincronização automática nem concorrência entre abas.
+
+## Temas, gráficos e acessibilidade
+
+settings.theme aceita system, light ou dark, persistido no JSON. src/styles/accessibility.css define tokens de contraste para ambos os temas e sobrepõe os estilos legados. Os pares principais são verificados numericamente para WCAG AA; a revisão das telas usa axe-core no modo de desenvolvimento ?audit=1. Isso não é certificação de conformidade completa.
+
+src/domain/history.ts produz séries sem inventar dados ausentes. O histórico do patrimônio em USD usa apenas usdValue/fxRate salvos no snapshot. Aportes agrupam investment_contribution, illiquid_contribution e compras; preços USD usam o câmbio da operação ou uma referência registrada até sua data. Sem câmbio, o total convertido do mês é indisponível. Receitas e despesas não são aportes e vendas não diminuem o indicador bruto de compras/aportes. Evitar importar consolidado e detalhe do mesmo aporte.
+
+TimeSeriesChart é compartilhado: leitura por ponteiro/toque e slider acessível para teclado, com painel de detalhes. Os gráficos simultâneos usam escalas independentes. Os sliders de cofrinhos compartilham valor com os campos numéricos e respeitam tanto a meta restante quanto a disponibilidade do ativo entre cofrinhos. Reduzir a meta não apaga destinações existentes: exige revisão antes de salvar.
+
+## Backup opcional com Firebase
+
+Consulte docs/FIREBASE.md. O módulo é carregado sob demanda ao abrir Conta e backup. Login Google usa persistência de sessão; Firestore Lite faz leituras e escritas confirmadas pelo servidor, sem cache offline. Cada backup validado é um documento imutável em users/{uid}/backups/{id}, com payload JSON e hash SHA-256. As regras precisam ser publicadas no projeto: só o UID proprietário pode ler/criar documentos. Não há permissões públicas.
+
+Nada é enviado automaticamente. O usuário confirma a conta de destino ao salvar e revisa a prévia antes de restaurar. A demonstração e um histórico local ilegível não podem ser enviados à nuvem. Os dados locais permanecem no navegador ao sair do Google; o login protege os backups remotos, não implementa perfis locais multiusuário. Nunca anunciar integração ativada sem configuração e teste com contas reais. Limite de 900 KB por documento; JSON local segue disponível.
+
+O roteiro detalhado de XLSX fica em docs/CONVERSION_PROMPT.md e é exibido e copiado pela interface, mantendo um único contrato de referência.
 
 ## Deploy e validação
 

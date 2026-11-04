@@ -1,13 +1,12 @@
 import { useState, type FormEvent } from "react";
 import {
-  availableForPocket,
   createDefaultPockets,
   pocketBalances,
   validatePocket,
   type Pocket,
 } from "../../domain/pockets";
 import type { Position } from "../../domain/domain";
-import { formatMoney as formatBaseMoney } from "../../domain/domain";
+import PocketAllocationEditor from "./PocketAllocationEditor";
 import { useDisplayCurrency } from "../../shared/DisplayCurrency";
 const defaultPockets = createDefaultPockets();
 export default function Pockets({
@@ -149,76 +148,11 @@ export default function Pockets({
       {current && (
         <form key={current.id} className="pocket-editor" onSubmit={save}>
           <h3>{draft ? "Novo cofrinho" : "Gerenciar cofrinho"}</h3>
-          {current.allocations.some(
-            (a) =>
-              !positions.some(
-                (p) =>
-                  p.assetId === a.assetId &&
-                  !p.isEmergencyReserve &&
-                  p.value > 0,
-              ),
-          ) && (
-            <p className="pocket-warning">
-              Há destinações em ativos indisponíveis. Elas serão removidas se
-              você salvar esta revisão.
-            </p>
-          )}
-          <div className="form-fields">
-            <label className="field">
-              <span>Nome</span>
-              <input
-                autoFocus
-                name="name"
-                required
-                defaultValue={current.name}
-              />
-            </label>
-            <label className="field">
-              <span>Meta em BRL</span>
-              <input
-                name="target"
-                type="number"
-                min="0"
-                step="0.01"
-                defaultValue={current.target}
-              />
-            </label>
-          </div>
-          <p>
-            Quanto de cada ativo deseja reservar? A soma entre cofrinhos não
-            pode superar a posição. Ativos da reserva de emergência ficam
-            separados.
-          </p>
-          <div className="pocket-options">
-            {positions
-              .filter((p) => !p.isEmergencyReserve && p.value > 0)
-              .map((p) => (
-                <label className="field" key={p.assetId}>
-                  <span>
-                    {p.ticker} · {formatMoney(p.value)}
-                  </span>
-                  <input
-                    aria-label={"Reservar " + p.ticker + " em BRL"}
-                    name={p.assetId}
-                    type="number"
-                    min="0"
-                    max={availableForPocket(p, pockets, current.id)}
-                    step="0.01"
-                    defaultValue={
-                      current.allocations.find((a) => a.assetId === p.assetId)
-                        ?.amount ?? 0
-                    }
-                  />
-                  <small>
-                    Disponível para este cofrinho em BRL:{" "}
-                    {formatBaseMoney(
-                      availableForPocket(p, pockets, current.id),
-                    )}
-                    .
-                  </small>
-                </label>
-              ))}
-          </div>
+          <PocketAllocationEditor
+            current={current}
+            pockets={pockets}
+            positions={positions}
+          />
           {error && <p role="alert">{error}</p>}
           <div className="goal-actions">
             <button className="button button-primary">Salvar cofrinho</button>

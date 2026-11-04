@@ -13,6 +13,13 @@ export function demoData(): AppData {
     const total = 30000 + (23 - m) * 2200;
     data.events.push(
       makeEvent({
+        type: "investment_contribution",
+        date: day,
+        amount: 2200,
+        liquidity: "liquid",
+        category: "Aporte fictício mensal",
+      }),
+      makeEvent({
         type: "income",
         date: day,
         category: "Salário",

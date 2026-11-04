@@ -1,4 +1,6 @@
 import {
+  lazy,
+  Suspense,
   useEffect,
   useMemo,
   useRef,
@@ -72,6 +74,11 @@ import {
 } from "../infrastructure/store";
 import Pockets from "../features/pockets/Pockets";
 import { createDefaultPockets } from "../domain/pockets";
+import ThemeControl from "../shared/ThemeControl";
+import HeaderMenu from "../shared/HeaderMenu";
+const CloudBackupPanel = lazy(
+  () => import("../features/cloud/CloudBackupPanel"),
+);
 import { demoData } from "../features/demo/demo";
 import ImportGuide from "../features/import/ImportGuide";
 import WealthHistory from "../features/history/WealthHistory";
@@ -228,6 +235,7 @@ function MonthPicker({
 function App() {
   const [data, setData] = useState<AppData>(emptyData());
   const [storageHealthy, setStorageHealthy] = useState(true);
+  const [cloudOpen, setCloudOpen] = useState(false);
   const [demo, setDemo] = useState(false);
   const [ready, setReady] = useState(false);
   const [view, setView] = useState<View>("overview");
@@ -953,34 +961,15 @@ function App() {
               <strong>{heading}</strong>
             </div>
             <div className="top-actions">
-              <button
-                disabled={
-                  !storageHealthy || quoteBusy || exportBusy || importBusy
+              <ThemeControl
+                value={data.settings.theme ?? "system"}
+                onChange={(theme) =>
+                  setData((current) => ({
+                    ...current,
+                    settings: { ...current.settings, theme },
+                  }))
                 }
-                className="button button-quiet"
-                onClick={async () => {
-                  if (demoLock.current) return;
-                  demoLock.current = true;
-                  try {
-                    await saveData(data, demo ? "-demo" : "");
-                    dataGeneration.current++;
-                    setStorageScope(!demo);
-                    const next = demo ? await loadData() : demoData();
-                    setDemo(!demo);
-                    setData(next);
-                    setView("overview");
-                  } catch {
-                    setStorageScope(demo);
-                    notify(
-                      "Não foi possível trocar o modo. Seus dados foram preservados.",
-                    );
-                  } finally {
-                    demoLock.current = false;
-                  }
-                }}
-              >
-                {demo ? "Sair da demo" : "Experimentar demo"}
-              </button>
+              />
               <CurrencySwitch
                 currency={displayCurrency}
                 usdBrl={fxRate}
@@ -994,19 +983,56 @@ function App() {
                   }))
                 }
               />
-              <button
-                className="button button-quiet top-import"
-                onClick={() => importRef.current?.click()}
-              >
-                <FileUp size={16} /> Importar JSON
-              </button>
-              <button
-                className="button button-outline top-export"
-                disabled={exportBusy || importBusy}
-                onClick={handleExport}
-              >
-                <Download size={16} /> {exportBusy ? "Exportando…" : "Exportar"}
-              </button>
+              <HeaderMenu>
+                <button
+                  className="button button-outline"
+                  onClick={() => setCloudOpen(true)}
+                >
+                  Conta e backup
+                </button>
+                <button
+                  disabled={
+                    !storageHealthy || quoteBusy || exportBusy || importBusy
+                  }
+                  className="button button-quiet"
+                  onClick={async () => {
+                    if (demoLock.current) return;
+                    demoLock.current = true;
+                    try {
+                      await saveData(data, demo ? "-demo" : "");
+                      dataGeneration.current++;
+                      setStorageScope(!demo);
+                      const next = demo ? await loadData() : demoData();
+                      setDemo(!demo);
+                      setData(next);
+                      setView("overview");
+                    } catch {
+                      setStorageScope(demo);
+                      notify(
+                        "Não foi possível trocar o modo. Seus dados foram preservados.",
+                      );
+                    } finally {
+                      demoLock.current = false;
+                    }
+                  }}
+                >
+                  {demo ? "Sair da demo" : "Experimentar demo"}
+                </button>
+                <button
+                  className="button button-quiet top-import"
+                  onClick={() => importRef.current?.click()}
+                >
+                  <FileUp size={16} /> Importar JSON
+                </button>
+                <button
+                  className="button button-outline top-export"
+                  disabled={exportBusy || importBusy}
+                  onClick={handleExport}
+                >
+                  <Download size={16} />{" "}
+                  {exportBusy ? "Exportando…" : "Exportar"}
+                </button>
+              </HeaderMenu>
               <button
                 className="button button-primary"
                 onClick={() => setModal("income")}
@@ -1138,6 +1164,35 @@ function App() {
           </footer>
         </main>
 
+        {cloudOpen && (
+          <Suspense
+            fallback={
+              <div className="toast" role="status">
+                Carregando conta…
+              </div>
+            }
+          >
+            <CloudBackupPanel
+              data={data}
+              demo={demo}
+              readable={storageHealthy}
+              onClose={() => setCloudOpen(false)}
+              onPreview={setImportPreview}
+              onSaved={(exported) => {
+                const snapshot = exported.events[exported.events.length - 1];
+                setData((current) => ({
+                  ...current,
+                  events: current.events.some(
+                    (event) => event.id === snapshot.id,
+                  )
+                    ? current.events
+                    : [...current.events, snapshot],
+                }));
+                notify("Backup confirmado na nuvem e snapshot registrado.");
+              }}
+            />
+          </Suspense>
+        )}
         {modal && (
           <EntryModal
             kind={modal}
@@ -1977,6 +2032,9 @@ function RebalancePage({
                       <td>
                         <label className="target-input target-wide">
                           <input
+                            aria-label={
+                              "Alvo de " + position.ticker + " em porcentagem"
+                            }
                             type="number"
                             min="0"
                             max="100"
