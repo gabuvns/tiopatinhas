@@ -165,10 +165,10 @@ export default function WealthGoals({
           Crie sua primeira meta para acompanhar o progresso.
         </p>
       )}
-      {currency === "USD" && (
+      {currency !== "BRL" && (
         <p className="muted goal-currency-note">
-          Cadastre as metas em reais. Os cartões mostram o equivalente em dólar
-          pelo câmbio de referência.
+          Cadastre as metas em reais. Os cartões mostram o equivalente em{" "}
+          {currency} pelo câmbio de referência salvo.
         </p>
       )}
       <form className="goal-add-form" onSubmit={(event) => save(event, null)}>
